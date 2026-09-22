@@ -24,13 +24,27 @@ cd Machine-Learning---Forecasting
 
 2. Install required packages:
 ```bash
-pip install pandas numpy matplotlib seaborn scikit-learn jupyter
+pip install pandas numpy matplotlib seaborn scikit-learn jupyter ipykernel
 ```
 
 3. Launch Jupyter Notebook:
 ```bash
 jupyter notebook
 ```
+
+### Why these packages are needed
+
+The notebooks use a small set of common Python data science libraries:
+
+- **pandas**: loads, cleans, filters, groups, and transforms tabular data such as CSV files.
+- **numpy**: provides fast numerical arrays and math operations used by pandas and machine learning libraries.
+- **matplotlib**: creates basic charts and plots for exploring data and showing model results.
+- **seaborn**: builds nicer statistical visualizations on top of matplotlib, such as heatmaps and distribution plots.
+- **scikit-learn**: provides machine learning tools for preprocessing, training models, evaluating results, and tuning parameters.
+- **jupyter**: runs the notebooks in a browser or editor so code, text, outputs, and charts stay together.
+- **ipykernel**: lets Jupyter use the Python interpreter from your virtual environment as a notebook kernel.
+
+The virtual environment itself, usually named `.venv/`, should not be committed to Git. It contains installed packages and machine-specific paths, so it should be recreated locally instead.
 
 ## 📖 Notebook Structure
 

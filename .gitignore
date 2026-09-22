@@ -19,3 +19,6 @@ __pycache__/
 # VS Code settings
 .vscode/
 .vscode/settings.json
+
+#virtual environment
+.venv/
