@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penguin Trees &amp; Forests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: Koze's hard-shadow style guide. Dot-grid paper; each section is one opaque shadowed panel with a colour-rotating heading chip; everything inside a panel is flat (border only). Part A = ideas with live toys, Part B = the notebook. */
+:root{
+  color-scheme:light;
+  --ink:#16191e; --ink-soft:#3d444d;
+  --paper:#f4f4f2; --surface:#f7f8f5; --accent:#b0c9e2; --paper-strong:#649fd3;
+  --accent-coral:#e28568; --accent-apricot:#ecaa4f; --accent-rose:#d983ae;
+  --positive:#2e7d4f; --negative:#c0392b; --white:#ffffff;
+  --border-hard:2px solid var(--ink);
+  --shadow:7px 7px 0 var(--ink); --shadow-sm:5px 5px 0 var(--ink);
+  /* aliases used by the page's scripts */
+  --muted:var(--ink-soft); --line:var(--ink); --ice:var(--paper-strong); --beak:var(--accent-coral);
+  --adelie:var(--paper-strong); --chin:var(--accent-rose); --gentoo:var(--accent-apricot);
+  --good:var(--positive); --bad:var(--negative);
+  --font:Manrope,"Avenir Next","Segoe UI Variable","Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html{overflow-x:hidden}
+*{border-radius:0!important;box-sizing:border-box}
+body{color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(22,25,30,0.14) 1.5px,transparent 1.5px);background-size:22px 22px;
+  padding-inline:24px;padding-block:32px 64px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:28px}
+.wrap>*{min-width:0}
+h1,h2,h3{font-weight:800;line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.85rem,3.5vw,3rem);line-height:1;letter-spacing:-.03em;max-width:16ch}
+h2{display:inline-block;justify-self:start;font-size:1.25rem;padding:.45rem .8rem;background:var(--paper-strong);color:var(--ink)}
+section:nth-of-type(4n+2) h2{background:var(--accent-coral)}
+section:nth-of-type(4n+3) h2{background:var(--accent-apricot)}
+section:nth-of-type(4n) h2{background:var(--accent-rose)}
+h3{font-size:1rem}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.84em;overflow-wrap:anywhere}
+code{background:var(--white);border:1px solid var(--ink);padding:0 4px}
+.eyebrow,.stepno,.part{font-size:.8rem;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+header,section{background:var(--surface);border:var(--border-hard);box-shadow:var(--shadow);padding:24px;display:grid;gap:16px}
+.lede{color:var(--ink-soft);max-width:64ch}
+.coords{font-family:var(--mono);font-size:.76rem;color:var(--ink-soft)}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:.85rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--white);border:var(--border-hard);padding:4px 10px;transition:transform .18s ease,background-color .18s ease}
+nav.toc a:hover{background:var(--accent);transform:translateY(-1px)}
+.part{padding-block:8px 0;font-size:.9rem;color:var(--ink)}
+.task{background:var(--accent);border:var(--border-hard);padding:12px 16px}
+.task b{font-weight:800}
+details{border:var(--border-hard);background:var(--white)}
+details summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+ ";font-weight:800}
+details[open] summary::before{content:"– "}
+details[open] summary{border-bottom:var(--border-hard)}
+details>div{padding:12px 14px 14px;display:grid;gap:10px}
+summary:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible,td:focus-visible{outline:3px solid var(--paper-strong);outline-offset:2px}
+pre{background:var(--white);border:var(--border-hard);padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.5;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.grid2>*{min-width:0}
+.box{background:var(--white);border:var(--border-hard);padding:14px;display:grid;gap:10px;min-width:0}
+.box>*{min-width:0}
+.muted{color:var(--ink-soft)} .small{font-size:.9rem}
+button{font-family:var(--font);font-size:.9rem;font-weight:700;border:var(--border-hard);background:var(--accent);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .18s ease,background-color .18s ease}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper-strong)}
+.btns{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:.8rem;font-variant-numeric:tabular-nums;background:var(--white)}
+th,td{border:1px solid var(--ink);padding:6px 10px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink);font-weight:700;background:var(--surface)}
+.gotcha{border:var(--border-hard);border-left:8px solid var(--negative);padding:12px 14px;background:var(--white);display:grid;gap:6px}
+.gotcha .eyebrow{color:var(--negative)}
+.quiz{display:grid;gap:10px}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}
+.fb{font-size:.92rem;min-height:1.4em;font-weight:600}
+.fb.ok{color:var(--positive)} .fb.no{color:var(--negative)}
+.slider{display:grid;grid-template-columns:150px 1fr 64px;gap:10px;align-items:center;font-family:var(--mono);font-size:.78rem}
+.slider>*{min-width:0}
+.slider output{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ink)}
+svg text{font-family:var(--mono)}
+.verdict{font-size:1.1rem;font-weight:800}
+.hbars{display:grid;gap:6px}
+.hbar{display:grid;grid-template-columns:140px 1fr 48px;gap:8px;align-items:center;font-family:var(--mono);font-size:.76rem}
+.hbar>*{min-width:0}
+.hbar .t{height:14px;background:var(--surface);border:1px solid var(--ink);position:relative}
+.hbar .f{position:absolute;inset:0 auto 0 0;background:var(--paper-strong)}
+.hbar span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.cm td{text-align:center;min-width:44px;cursor:pointer}
+.cm td.diag{font-weight:700;color:var(--positive)}
+.cm td.off{color:var(--negative);font-weight:700}
+.cm td.sel{background:var(--accent)}
+.num{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.num label{display:grid;gap:4px;font-size:.8rem;font-weight:650;text-transform:uppercase;letter-spacing:.05em}
+.num input{font-family:var(--mono);font-size:.9rem;padding:6px 8px;border:var(--border-hard);background:var(--white);color:var(--ink);width:100%}
+ol.trail{margin:0;padding-left:1.2em;display:grid;gap:4px}
+footer{padding-block:8px;color:var(--ink-soft);font-size:.9rem}
+@media (max-width:720px){header,section{box-shadow:var(--shadow-sm);padding:16px}body{padding-inline:12px}}
+@media (max-width:520px){.slider{grid-template-columns:1fr 56px}.slider label{grid-column:1/-1}.hbar{grid-template-columns:110px 1fr 44px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Machine Learning &amp; Forecasting · Lesson 2</span>
+  <h1>Penguin Trees &amp; Forests</h1>
+  <p class="lede">A study guide for <code>2 - Decision Trees &amp; Random Forest (student notebook).ipynb</code>. Part A builds the intuition with small toys that run on your real data. Part B walks the notebook section by section: what to do, hints that get stronger as you open them, and a quick check. Try each task before opening a hint.</p>
+  <span class="coords">Palmer Archipelago, Antarctica · 64.8°S 64.1°W · 344 penguins → 334 after dropna · Adelie 146 · Gentoo 120 · Chinstrap 68</span>
+  <nav class="toc" aria-label="Contents">
+    <a href="#tree">How a tree decides</a><a href="#gini">Gini</a><a href="#overfit">Overfitting</a><a href="#forest">Random forest</a>
+    <a href="#nb-dt">Notebook: tree</a><a href="#nb-metrics">Metrics</a><a href="#nb-rf">Notebook: forest</a><a href="#ex1">Exercise 1</a><a href="#ex2">Exercise 2</a><a href="#oral">Oral prep</a>
+  </nav>
+</header>
+
+<div class="part">Part A · The ideas</div>
+
+<section id="tree">
+  <span class="stepno">IDEA 1 · A TREE IS A GAME OF 20 QUESTIONS</span>
+  <h2>How a decision tree decides</h2>
+  <p>A decision tree asks yes/no questions about one feature at a time, like <i>"is the flipper shorter than 206.5 mm?"</i>. Each answer sends the penguin down a branch until it reaches a <b>leaf</b>, which holds the prediction. Training means: find the questions (feature + threshold) that separate the species best.</p>
+  <p>Below is the <b>real</b> tree scikit-learn learns from your training data when you limit it to depth 2. Move the sliders to build a penguin and watch its path.</p>
+  <div class="box">
+    <div class="slider"><label for="fl">flipper_length_mm</label><input id="fl" type="range" min="172" max="231" value="190"><output id="flo"></output></div>
+    <div class="slider"><label for="cl">culmen_length_mm</label><input id="cl" type="range" min="32" max="60" step="0.5" value="39"><output id="clo"></output></div>
+    <div class="slider"><label for="cd">culmen_depth_mm</label><input id="cd" type="range" min="13" max="21.5" step="0.1" value="18.5"><output id="cdo"></output></div>
+    <div class="scroll"><svg id="treesvg" viewBox="0 0 640 250" width="100%" style="min-width:520px" role="img" aria-label="Depth-2 decision tree"></svg></div>
+    <p class="verdict" id="verdict"></p>
+    <p class="small muted">Try: flipper 215, culmen depth 15 → Gentoo. Now raise culmen depth above 17.65 and the tree says Chinstrap, even though a long-flippered Chinstrap is rare. A depth-2 tree is crude; the full tree adds more questions.</p>
+  </div>
+  <div class="quiz" data-answer="b">
+    <p><b>Check:</b> do you need to scale features (StandardScaler) for a decision tree?</p>
+    <div class="opts"><button data-v="a">Yes, always</button><button data-v="b">No</button></div>
+    <p class="fb" data-ok="Right. A tree only asks 'is x ≤ threshold?'. Multiplying a column by 1000 just moves the threshold; the split is the same. (Exercise 1 asks you to scale anyway. It does no harm, but be ready to say why it isn't needed.)" data-no="Think about what a split is: 'flipper ≤ 206.5'. If you measured flippers in cm instead of mm, would the tree make different decisions?"></p>
+  </div>
+</section>
+
+<section id="gini">
+  <span class="stepno">IDEA 2 · HOW IT PICKS A QUESTION</span>
+  <h2>Gini impurity: how mixed is this group?</h2>
+  <p>At each node the tree tries every feature and every threshold and keeps the split whose children are the <b>purest</b>. Purity is measured with Gini impurity (the default) or entropy:</p>
+  <pre>gini = 1 − Σ (share of class k)²      0 = pure,   higher = more mixed</pre>
+  <p>You see <code>gini = …</code> printed in every box of <code>plot_tree</code>. Now you know what it means.</p>
+  <div class="box">
+    <div class="num">
+      <label for="g1">Adelie<input id="g1" type="number" min="0" value="105"></label>
+      <label for="g2">Chinstrap<input id="g2" type="number" min="0" value="45"></label>
+      <label for="g3">Gentoo<input id="g3" type="number" min="0" value="83"></label>
+    </div>
+    <div class="btns"><button id="gp-root">Root of your tree</button><button id="gp-pure">A pure leaf</button><button id="gp-even">Perfectly mixed</button></div>
+    <p class="verdict">gini = <span id="gout" class="mono"></span></p>
+    <p class="small muted" id="gexp"></p>
+  </div>
+  <p class="small muted">Entropy (<code>criterion="entropy"</code>, used in Exercise 1) measures the same thing with logarithms. It usually picks almost the same splits.</p>
+</section>
+
+<section id="overfit">
+  <span class="stepno">IDEA 3 · THE WEAKNESS</span>
+  <h2>A tree with no limit memorises</h2>
+  <p>Without <code>max_depth</code>, a tree keeps splitting until every leaf is pure. On training data that looks perfect. On new data it often isn't. You will see this in Exercise 2 on Melbourne house prices:</p>
+  <div class="scroll"><table>
+    <tr><th>DecisionTreeRegressor (no limit)</th><th>Mean absolute error</th></tr>
+    <tr><td>on training data</td><td>$864</td></tr>
+    <tr><td>on test data</td><td style="color:var(--bad)">$251,689</td></tr>
+  </table></div>
+  <p>Almost zero error on data it has seen, a quarter million on data it hasn't. That gap is <b>overfitting</b> (high variance): small changes in the training data produce a very different tree. Lesson 1 had the opposite problem: linear regression <i>underfit</i>.</p>
+</section>
+
+<section id="forest">
+  <span class="stepno">IDEA 4 · THE FIX</span>
+  <h2>A random forest: many tree opinions, one vote</h2>
+  <p>One deep tree is unreliable. Many deep trees that each make <b>different</b> mistakes, averaged together, are reliable. Two tricks make the trees different:</p>
+  <div class="grid2">
+    <div class="box"><h3>Bootstrap rows (bagging)</h3><p class="small">Each tree trains on a random sample of rows drawn <i>with replacement</i>. Some penguins appear twice, about a third not at all.</p></div>
+    <div class="box"><h3>Random features per split</h3><p class="small">At every split a tree may only look at a random subset of features. <code>max_features="sqrt"</code> with 8 features → 2 or 3 candidates per split. This stops every tree from using culmen_length first.</p></div>
+  </div>
+  <p>Classification: the trees <b>vote</b>, majority wins. Regression: the predictions are <b>averaged</b>. On Melbourne, a forest drops test MAE from $251,689 to $190,415 and lifts R² from 0.55 to 0.72.</p>
+  <div class="box">
+    <h3>Does adding more trees help? (your penguin data)</h3>
+    <svg id="errsvg" viewBox="0 0 640 230" width="100%" role="img" aria-label="Test error versus number of trees"></svg>
+    <p class="small muted">Test error for <code>n_estimators</code> 1 → 39, <code>random_state=101</code>. It falls fast, then flattens. More trees never hurt accuracy, they only cost time. This is the plot your <code>for n in range(1, 40)</code> loop should produce.</p>
+  </div>
+</section>
+
+<div class="part">Part B · Your notebook</div>
+
+<section id="nb-dt">
+  <span class="stepno">NOTEBOOK · DECISION TREE (cells 0–27)</span>
+  <h2>Read the filled-in part like a detective</h2>
+  <p>This part is already written. Your job is to <b>run it and be able to explain every line</b>. Questions to answer for yourself as you go:</p>
+  <ol class="trail">
+    <li><code>df.dropna()</code> removes 10 rows. How many penguins are left? (334)</li>
+    <li><code>pd.get_dummies(..., drop_first=True)</code>: why does <code>island</code> become 2 columns and not 3?</li>
+    <li>Why is there both <code>sex_FEMALE</code> <i>and</i> <code>sex_MALE</code>, if <code>drop_first</code> should leave one? (Look at <code>df["sex"].value_counts()</code>.)</li>
+    <li>In the <code>plot_tree</code> picture: what do <code>samples</code>, <code>value</code> and <code>gini</code> mean in each box?</li>
+  </ol>
+  <details><summary>Answer check for question 3</summary><div><p>One row has <code>sex = "."</code>, a data-entry error that <code>dropna</code> doesn't catch because it isn't NaN. So there are 3 categories: ".", FEMALE, MALE. <code>drop_first</code> drops "." (alphabetically first), leaving two columns. A good catch to mention: clean it with <code>df = df[df["sex"] != "."]</code>.</p></div></details>
+  <div class="box">
+    <h3>Your tree's confusion matrix (test set, 101 penguins)</h3>
+    <p class="small muted">Rows = true species, columns = predicted. Click a cell.</p>
+    <div class="scroll"><table class="cm" id="cm"></table></div>
+    <p class="small" id="cmexp">Diagonal = correct. Off-diagonal = mistakes.</p>
+  </div>
+  <p class="small muted">Your tree may differ by a penguin or two from this, because <code>DecisionTreeClassifier()</code> has no <code>random_state</code>. Add <code>random_state=0</code> if you want the same result every run.</p>
+</section>
+
+<section id="nb-metrics">
+  <span class="stepno">NOTEBOOK · "UNDERSTANDING THE METRICS" (cell 28)</span>
+  <h2>Precision, recall, F1, support</h2>
+  <p>Here you write the definitions yourself. Use the confusion matrix above and think about <b>one species at a time</b>, say Chinstrap:</p>
+  <div class="grid2">
+    <div class="box"><h3>Precision</h3><p class="small">Look down the Chinstrap <b>column</b>: of all penguins the model <i>called</i> Chinstrap, how many really were?</p></div>
+    <div class="box"><h3>Recall</h3><p class="small">Look along the Chinstrap <b>row</b>: of all real Chinstraps, how many did the model find?</p></div>
+    <div class="box"><h3>F1-score</h3><p class="small">One number that balances both (harmonic mean). It is low if either one is low.</p></div>
+    <div class="box"><h3>Support</h3><p class="small">How many real penguins of that species are in the test set. Small support = less trustworthy score.</p></div>
+  </div>
+  <div class="task"><b>Your task.</b> Write each definition in your own words (the template is in Dutch; Dutch or English is fine), plus one sentence each on what it means <i>for Chinstrap</i>.</div>
+  <div class="quiz" data-answer="b">
+    <p><b>Check:</b> using the matrix above, Chinstrap precision is…</p>
+    <div class="opts"><button data-v="a">22 / 23 (row)</button><button data-v="b">22 / 23 (column)</button><button data-v="c">22 / 101</button></div>
+    <p class="fb" data-ok="Yes. The column holds 1 Adelie mislabelled as Chinstrap + 22 real Chinstraps = 23 predicted, 22 right → 0.96. Here the row happens to give 22/23 too (recall), which is why you should count, not guess." data-no="Precision is about what the model predicted, so you read the predicted-Chinstrap column. 22/101 is part of accuracy, not precision."></p>
+  </div>
+</section>
+
+<section id="nb-rf">
+  <span class="stepno">NOTEBOOK · RANDOM FOREST (cells 29–57)</span>
+  <h2>Rebuild it yourself, then grow a forest</h2>
+  <div class="task"><b>Your task.</b> Reload, clean, get dummies, split (same <code>test_size=0.3, random_state=101</code>), then train a <code>RandomForestClassifier</code> with 10 trees, <code>max_features="sqrt"</code>, a random_state. Evaluate, plot feature importances, run the n-trees loop, fill in the four analysis points.</div>
+  <div class="gotcha"><span class="eyebrow">Will crash · cell 31</span>
+    <p class="small"><code>os.chdir()</code> with nothing inside raises <code>TypeError</code>. Your notebook is already in the right folder, so delete that line or comment it out.</p></div>
+  <details><summary>Hint 1: cells 32–38 are a copy</summary><div><p>You already did loading, dropna, get_dummies and the split in the decision-tree part. Same steps, same parameters. Copy your understanding, not just the code.</p></div></details>
+  <details><summary>Hint 2: the model (cell 42)</summary><div><pre>model = RandomForestClassifier(n_estimators=___, max_features=___, random_state=101)
+model.fit(___, ___)</pre></div></details>
+  <details><summary>Hint 3: confusion matrix and report (cells 47–49)</summary><div><p>Exactly the same calls as in the decision-tree part, with your new <code>preds</code>. For <code>ConfusionMatrixDisplay</code> use <code>display_labels=model.classes_</code>.</p></div></details>
+  <details><summary>Hint 4: the n-trees loop (cell 55)</summary><div><p>For every n: make a forest with n trees, fit, predict on <code>X_test</code>, compute error = 1 − accuracy, append it to the list. Then <code>plt.plot(range(1, 40), test_error)</code>. Label your axes.</p><pre>for n in range(1, 40):
+    rfc = RandomForestClassifier(n_estimators=n, max_features="sqrt", random_state=101)
+    ...
+    test_error.append(1 - accuracy_score(___, ___))</pre></div></details>
+  <div class="box">
+    <h3>Feature importances you should roughly see (10 trees)</h3>
+    <div class="hbars" id="imp"></div>
+    <p class="small muted">Mean decrease in impurity: how much each feature, summed over all splits in all trees, reduced Gini. Sex barely matters for species. That makes biological sense.</p>
+  </div>
+  <details><summary>Prompts for the 4 analysis points (cell 57)</summary><div>
+    <p class="small"><b>1. Performance:</b> accuracy around 0.97 with 10 trees. Which species gets confused with which? Why are Gentoo never confused (look at the pairplot)?</p>
+    <p class="small"><b>2. Importance:</b> top 3 features, and does that match the tree you drew?</p>
+    <p class="small"><b>3. Number of trees:</b> where does the error curve flatten? Is it worth going from 30 to 300?</p>
+    <p class="small"><b>4. Vs a single tree:</b> on penguins both score ~97–98%, because the data is easy. Where does a forest really win? (Hint: Melbourne, Idea 3.)</p>
+  </div></details>
+</section>
+
+<section id="ex1">
+  <span class="stepno">EXERCISE 1 · RANDOM FOREST CLASSIFIER ON LOANS</span>
+  <h2>Will the loan be approved?</h2>
+  <p><code>loan_data.csv</code>: 381 applications, 13 columns. Target <code>Loan_Status</code> (Y 271 / N 110). Missing values in 5 columns: Credit_History 30, Self_Employed 21, Loan_Amount_Term 11, Dependents 8, Gender 5.</p>
+  <div class="task"><b>Your task.</b> Follow the cell comments: impute Loan_Amount_Term, recode <code>3+</code>, dropna, label-encode, split, scale, fit a forest with <code>criterion="entropy"</code>, report, importances, conclusion.</div>
+  <details><summary>Hint 1: imputing one column</summary><div><p>SimpleImputer wants a 2-D input, so use double brackets: <code>data[["Loan_Amount_Term"]]</code>. Which strategy fits a column whose values are almost all 360?</p></div></details>
+  <details><summary>Hint 2: "3+"</summary><div><p><code>Dependents</code> is text: "0", "1", "2", "3+". A model can't read "3+". Use <code>.replace("3+", "3")</code> and assign it back to the column.</p></div></details>
+  <details><summary>Hint 3: label encoding in a loop</summary><div><pre>le = LabelEncoder()
+for col in data.select_dtypes(exclude="number").columns:
+    data[col] = le.fit_transform(data[col])</pre></div></details>
+  <div class="gotcha"><span class="eyebrow">Think before you encode · Loan_ID</span>
+    <p class="small"><code>Loan_ID</code> is text too, so the loop will happily turn it into numbers 0…316. But an ID carries no information about approval. Should it be a feature? Decide, and drop it before splitting if not.</p></div>
+  <p class="small">Checkpoint: with Loan_ID dropped, <code>test_size=0.3, random_state=101</code>, you land around <b>0.83 accuracy</b>, and <b>Credit_History</b> is the top feature. Compare that to the "always say Y" baseline of 0.63. For the conclusion, look at recall for class 0 (rejected loans): it is much lower than for class 1. What does that mean for a bank?</p>
+</section>
+
+<section id="ex2">
+  <span class="stepno">EXERCISE 2 · TREE REGRESSOR ON MELBOURNE PRICES</span>
+  <h2>From classifying to predicting a number</h2>
+  <p>Same tree idea, but each leaf now holds an <b>average price</b> instead of a species. Features: Rooms, Bathroom, Landsize, Lattitude, Longtitude (the misspellings are in the CSV, copy them exactly). Target: Price.</p>
+  <div class="gotcha"><span class="eyebrow">Mismatch in the notebook</span>
+    <p class="small">The heading says "Random Forest Regressor", the code imports <code>DecisionTreeRegressor</code>. Do what the code asks, then add a <code>RandomForestRegressor</code> as a bonus and compare. That comparison is great material for the oral exam.</p></div>
+  <div class="grid2">
+    <div class="box"><h3>MAE</h3><p class="small">Average absolute miss, in dollars. Easiest to explain.</p></div>
+    <div class="box"><h3>MSE</h3><p class="small">Average squared miss. Punishes big misses hard. Units are dollars², so take the root (RMSE) to read it.</p></div>
+    <div class="box"><h3>R²</h3><p class="small">Share of the price variation the model explains. 1 = perfect, 0 = no better than always guessing the mean.</p></div>
+  </div>
+  <details><summary>Hint 1: dropna first</summary><div><p><code>melb_data.csv</code> has 13,580 rows; <code>dropna()</code> leaves 6,196. Fine for this exercise.</p></div></details>
+  <details><summary>Hint 2: the last cell</summary><div><p>"Predict the first five houses": <code>model.predict(X_test.head())</code>, and print <code>y_test.head()</code> next to it so you can compare.</p></div></details>
+  <p class="small">Checkpoint (<code>random_state=1</code>, default split): tree MAE ≈ $252k, R² ≈ 0.55. Forest MAE ≈ $190k, R² ≈ 0.72. Then compute the tree's MAE on the <i>training</i> set. The gap is the overfitting story from Idea 3.</p>
+</section>
+
+<section id="oral">
+  <span class="stepno">ORAL EXAM PREP · 70% OF YOUR GRADE</span>
+  <h2>Can you say these out loud?</h2>
+  <ol class="trail">
+    <li>How does a decision tree choose its first split?</li>
+    <li>What does gini = 0 mean in a leaf?</li>
+    <li>Why don't trees need feature scaling?</li>
+    <li>Why does an unlimited tree overfit, and name two ways to limit it (<code>max_depth</code>, <code>min_samples_leaf</code>).</li>
+    <li>What two kinds of randomness make a random forest work?</li>
+    <li>How does a forest combine its trees for classification? For regression?</li>
+    <li>Precision vs recall: which matters more for a bank rejecting loans?</li>
+    <li>What is feature importance (MDI), and one limitation of it?</li>
+  </ol>
+</section>
+
+<footer>Numbers computed from the CSVs in your <span class="mono">2 - Decision Trees - Random Forests/datasets</span> folder with scikit-learn 1.9.1 and pandas 3.0.6, the same versions as your .venv.</footer>
+</div>
+
+<script>
+// ----- quizzes
+document.querySelectorAll('.quiz').forEach(q=>{const fb=q.querySelector('.fb');
+  q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    q.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');
+    const ok=b.dataset.v===q.dataset.answer;fb.textContent=ok?fb.dataset.ok:fb.dataset.no;fb.className='fb '+(ok?'ok':'no');}));});
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// ----- interactive tree
+const fl=document.getElementById('fl'),cl=document.getElementById('cl'),cd=document.getElementById('cd');
+function drawTree(){
+  const F=+fl.value,L=+cl.value,D=+cd.value;
+  document.getElementById('flo').textContent=F+' mm';document.getElementById('clo').textContent=L.toFixed(1)+' mm';document.getElementById('cdo').textContent=D.toFixed(1)+' mm';
+  const left=F<=206.5, leaf= left?(L<=42.35?0:1):(D<=17.65?2:3);
+  const names=['Adelie','Chinstrap','Gentoo','Chinstrap'], cols=['--adelie','--chin','--gentoo','--chin'];
+  const ink=css('--ink'),muted=css('--muted'),line=css('--line'),acc=css('--ice'),surf=css('--white');
+  const node=(x,y,w,txt,on)=>`<rect x="${x-w/2}" y="${y-16}" width="${w}" height="32" fill="${surf}" stroke="${on?acc:line}" stroke-width="${on?2.5:1}"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="12" fill="${on?ink:muted}">${txt}</text>`;
+  const edge=(x1,y1,x2,y2,on,lab)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${on?acc:line}" stroke-width="${on?3:1.5}"/><text x="${(x1+x2)/2+(x2<x1?-14:14)}" y="${(y1+y2)/2}" text-anchor="middle" font-size="10" fill="${muted}">${lab}</text>`;
+  const leafN=(x,i,on)=>{const c=css(cols[i]);return `<rect x="${x-52}" y="${200}" width="104" height="32" fill="${on?c:surf}" stroke="${ink}" stroke-width="2"/><text x="${x}" y="${220}" text-anchor="middle" font-size="12" font-weight="600" fill="${on?ink:ink}">${names[i]}</text>`};
+  const lx=[80,240,400,560];
+  let s='';
+  s+=edge(320,46,160,110,true&&left,'yes')+edge(320,46,480,110,!left,'no');
+  s+=edge(160,126,lx[0],200,leaf===0,'yes')+edge(160,126,lx[1],200,leaf===1,'no');
+  s+=edge(480,126,lx[2],200,leaf===2,'yes')+edge(480,126,lx[3],200,leaf===3,'no');
+  s+=node(320,30,230,'flipper_length ≤ 206.5',true);
+  s+=node(160,110,220,'culmen_length ≤ 42.35',left);
+  s+=node(480,110,220,'culmen_depth ≤ 17.65',!left);
+  lx.forEach((x,i)=>s+=leafN(x,i,leaf===i));
+  document.getElementById('treesvg').innerHTML=s;
+  document.getElementById('verdict').innerHTML='Prediction: <b style="background:var('+cols[leaf]+');padding:2px 8px;border:2px solid var(--ink)">'+names[leaf]+'</b> after 2 questions';
+}
+[fl,cl,cd].forEach(e=>e.addEventListener('input',drawTree));
+// ----- gini
+const g=[1,2,3].map(i=>document.getElementById('g'+i));
+function gini(){const v=g.map(e=>Math.max(0,+e.value||0)),n=v.reduce((a,b)=>a+b,0);
+  if(!n){document.getElementById('gout').textContent='–';return}
+  const gi=1-v.reduce((a,b)=>a+(b/n)**2,0);document.getElementById('gout').textContent=gi.toFixed(3);
+  document.getElementById('gexp').textContent=`1 − (${v.map(x=>(x/n).toFixed(2)+'²').join(' + ')}) = ${gi.toFixed(3)}. `+(gi<0.001?'Pure: every penguin in this node is the same species, so the tree stops here.':gi>0.66?'As mixed as 3 classes can get (max ≈ 0.667). The tree wants to split this.':'Mixed. A good split makes the children closer to 0.');}
+g.forEach(e=>e.addEventListener('input',gini));
+const setG=a=>{a.forEach((x,i)=>g[i].value=x);gini()};
+document.getElementById('gp-root').onclick=()=>setG([105,45,83]);
+document.getElementById('gp-pure').onclick=()=>setG([40,0,0]);
+document.getElementById('gp-even').onclick=()=>setG([50,50,50]);
+// ----- error chart
+function errChart(){
+  const e=[0.0495,0.0594,0.0495,0.0396,0.0495,0.0396,0.0297,0.0198,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0297,0.0198,0.0297,0.0099,0.0198,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099,0.0099];
+  const W=640,H=230,l=52,r=16,t=14,b=40,ymax=0.06;
+  const X=n=>l+(n-1)/38*(W-l-r),Y=v=>t+(1-v/ymax)*(H-t-b);
+  const ink=css('--ink'),muted=css('--muted'),line=css('--line'),acc=css('--ice'),hi=css('--beak');
+  let s='';
+  [0,0.02,0.04,0.06].forEach(v=>{s+=`<line x1="${l}" x2="${W-r}" y1="${Y(v)}" y2="${Y(v)}" stroke="${line}" stroke-opacity="0.2"/><text x="${l-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="${muted}">${(v*100).toFixed(0)}%</text>`});
+  [1,10,20,30,39].forEach(n=>s+=`<text x="${X(n)}" y="${H-b+18}" text-anchor="middle" font-size="11" fill="${muted}">${n}</text>`);
+  s+=`<text x="${(l+W-r)/2}" y="${H-4}" text-anchor="middle" font-size="11" fill="${muted}">n_estimators (number of trees)</text>`;
+  const pts=e.map((v,i)=>`${X(i+1)},${Y(v)}`).join(' ');
+  s+=`<polygon points="${X(1)},${Y(0)} ${pts} ${X(39)},${Y(0)}" fill="${acc}" opacity="0.12"/>`;
+  s+=`<polyline points="${pts}" fill="none" stroke="${acc}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s+=`<circle cx="${X(10)}" cy="${Y(e[9])}" r="5" fill="${hi}"/><text x="${X(10)+8}" y="${Y(e[9])-10}" font-size="11" fill="${ink}">10 trees: 3.0%</text>`;
+  s+=`<circle cx="${X(39)}" cy="${Y(e[38])}" r="5" fill="${hi}"/><text x="${X(39)-4}" y="${Y(e[38])-12}" text-anchor="end" font-size="11" fill="${ink}">from 26 trees: 1.0% (1 penguin)</text>`;
+  document.getElementById('errsvg').innerHTML=s;
+}
+// ----- importances
+const imp={culmen_length_mm:.319,body_mass_g:.213,flipper_length_mm:.173,island_Dream:.145,culmen_depth_mm:.102,island_Torgersen:.037,sex_FEMALE:.006,sex_MALE:.004};
+document.getElementById('imp').innerHTML=Object.entries(imp).map(([k,v])=>`<div class="hbar"><span>${k}</span><div class="t"><div class="f" style="width:${v/.35*100}%"></div></div><span>${v.toFixed(3)}</span></div>`).join('');
+// ----- confusion matrix
+const sp=['Adelie','Chinstrap','Gentoo'],M=[[40,1,0],[1,22,0],[0,0,37]];
+const cm=document.getElementById('cm');
+cm.innerHTML='<tr><th>true ↓ / pred →</th>'+sp.map(s=>`<th>${s}</th>`).join('')+'</tr>'+M.map((r,i)=>`<tr><th>${sp[i]}</th>`+r.map((v,j)=>`<td data-i="${i}" data-j="${j}" class="${i===j?'diag':(v?'off':'')}" tabindex="0">${v}</td>`).join('')+'</tr>').join('');
+const cmexp=document.getElementById('cmexp');
+cm.querySelectorAll('td').forEach(td=>{const f=()=>{cm.querySelectorAll('td').forEach(x=>x.classList.remove('sel'));td.classList.add('sel');
+  const i=+td.dataset.i,j=+td.dataset.j,v=+td.textContent;
+  cmexp.textContent=i===j?`${v} ${sp[i]} penguins correctly recognised.`:(v?`${v} real ${sp[i]} predicted as ${sp[j]}. A mistake.`:`No ${sp[i]} was ever predicted as ${sp[j]}.`)+` Accuracy = diagonal / total = 99/101 = 0.98.`};
+  td.addEventListener('click',f);td.addEventListener('keydown',e=>{if(e.key==='Enter')f()});});
+// ----- boot + theme redraw
+function drawAll(){drawTree();gini();errChart()}
+drawAll();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',drawAll);
+new MutationObserver(drawAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+</script>
+
+</html>

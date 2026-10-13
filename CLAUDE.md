@@ -37,4 +37,9 @@ Submitting: link to a commit, not to `main`, e.g. `https://github.com/massirr/Ma
 - Explain with my own outputs and numbers, simply and visually (small tables, ASCII sketches).
 - When something would be copy-pasted into a file, edit the file in place so I can review it.
 - Any explanation text written into my notebooks: run the humanizer skill first, then the structural-humanizer skill.
-- Check `NOTES-FOR-CLAUDE.md` for where I am right now.
+- Check `NOTES-FOR-CLAUDE.md` for where I am right now, how I study, and the hint ladder. Keep it up to date when I finish a task.
+- Each lesson folder has a `study-guide.html` with what I've been taught. Read it before explaining a topic, and reuse its examples and numbers.
+
+## Teaching mode
+
+When I ask for help with an exercise, act as a teacher, not a code generator: follow the hint ladder in `NOTES-FOR-CLAUDE.md`, use my own notebook outputs as examples, and don't edit my exercise notebook unless I ask you to.

@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ridge, Lasso &amp; Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: Koze's hard-shadow style guide. Dot-grid paper; each section is one opaque shadowed panel with a colour-rotating heading chip; everything inside a panel is flat (border only). Part A = lesson 3 ideas with live toys on real numbers, Part B = the Ames exercise with graded hints. */
+:root{
+  color-scheme:light;
+  --ink:#16191e; --ink-soft:#3d444d;
+  --paper:#f4f4f2; --surface:#f7f8f5; --accent:#b0c9e2; --paper-strong:#649fd3;
+  --accent-coral:#e28568; --accent-apricot:#ecaa4f; --accent-rose:#d983ae;
+  --positive:#2e7d4f; --negative:#c0392b; --white:#ffffff;
+  --border-hard:2px solid var(--ink);
+  --shadow:7px 7px 0 var(--ink); --shadow-sm:5px 5px 0 var(--ink);
+  /* aliases used by the page's scripts */
+  --muted:var(--ink-soft); --line:var(--ink); --ice:var(--paper-strong); --beak:var(--accent-coral);
+  --adelie:var(--paper-strong); --chin:var(--accent-rose); --gentoo:var(--accent-apricot);
+  --good:var(--positive); --bad:var(--negative);
+  --font:Manrope,"Avenir Next","Segoe UI Variable","Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html{overflow-x:hidden}
+*{border-radius:0!important;box-sizing:border-box}
+body{color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(22,25,30,0.14) 1.5px,transparent 1.5px);background-size:22px 22px;
+  padding-inline:24px;padding-block:32px 64px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:28px}
+.wrap>*{min-width:0}
+h1,h2,h3{font-weight:800;line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.85rem,3.5vw,3rem);line-height:1;letter-spacing:-.03em;max-width:16ch}
+h2{display:inline-block;justify-self:start;font-size:1.25rem;padding:.45rem .8rem;background:var(--paper-strong);color:var(--ink)}
+section:nth-of-type(4n+2) h2{background:var(--accent-coral)}
+section:nth-of-type(4n+3) h2{background:var(--accent-apricot)}
+section:nth-of-type(4n) h2{background:var(--accent-rose)}
+h3{font-size:1rem}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.84em;overflow-wrap:anywhere}
+code{background:var(--white);border:1px solid var(--ink);padding:0 4px}
+.eyebrow,.stepno,.part{font-size:.8rem;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+header,section{background:var(--surface);border:var(--border-hard);box-shadow:var(--shadow);padding:24px;display:grid;gap:16px}
+.lede{color:var(--ink-soft);max-width:64ch}
+.coords{font-family:var(--mono);font-size:.76rem;color:var(--ink-soft)}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:.85rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--white);border:var(--border-hard);padding:4px 10px;transition:transform .18s ease,background-color .18s ease}
+nav.toc a:hover{background:var(--accent);transform:translateY(-1px)}
+.part{padding-block:8px 0;font-size:.9rem;color:var(--ink)}
+.task{background:var(--accent);border:var(--border-hard);padding:12px 16px}
+.task b{font-weight:800}
+details{border:var(--border-hard);background:var(--white)}
+details summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+ ";font-weight:800}
+details[open] summary::before{content:"– "}
+details[open] summary{border-bottom:var(--border-hard)}
+details>div{padding:12px 14px 14px;display:grid;gap:10px}
+summary:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible,td:focus-visible{outline:3px solid var(--paper-strong);outline-offset:2px}
+pre{background:var(--white);border:var(--border-hard);padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.5;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.grid2>*{min-width:0}
+.box{background:var(--white);border:var(--border-hard);padding:14px;display:grid;gap:10px;min-width:0}
+.box>*{min-width:0}
+.muted{color:var(--ink-soft)} .small{font-size:.9rem}
+button{font-family:var(--font);font-size:.9rem;font-weight:700;border:var(--border-hard);background:var(--accent);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .18s ease,background-color .18s ease}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper-strong)}
+.btns{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:.8rem;font-variant-numeric:tabular-nums;background:var(--white)}
+th,td{border:1px solid var(--ink);padding:6px 10px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink);font-weight:700;background:var(--surface)}
+.gotcha{border:var(--border-hard);border-left:8px solid var(--negative);padding:12px 14px;background:var(--white);display:grid;gap:6px}
+.gotcha .eyebrow{color:var(--negative)}
+.quiz{display:grid;gap:10px}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}
+.fb{font-size:.92rem;min-height:1.4em;font-weight:600}
+.fb.ok{color:var(--positive)} .fb.no{color:var(--negative)}
+.slider{display:grid;grid-template-columns:150px 1fr 64px;gap:10px;align-items:center;font-family:var(--mono);font-size:.78rem}
+.slider>*{min-width:0}
+.slider output{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ink)}
+svg text{font-family:var(--mono)}
+.verdict{font-size:1.1rem;font-weight:800}
+.hbars{display:grid;gap:6px}
+.hbar{display:grid;grid-template-columns:140px 1fr 48px;gap:8px;align-items:center;font-family:var(--mono);font-size:.76rem}
+.hbar>*{min-width:0}
+.hbar .t{height:14px;background:var(--surface);border:1px solid var(--ink);position:relative}
+.hbar .f{position:absolute;inset:0 auto 0 0;background:var(--paper-strong)}
+.hbar span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.cm td{text-align:center;min-width:44px;cursor:pointer}
+.cm td.diag{font-weight:700;color:var(--positive)}
+.cm td.off{color:var(--negative);font-weight:700}
+.cm td.sel{background:var(--accent)}
+.num{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.num label{display:grid;gap:4px;font-size:.8rem;font-weight:650;text-transform:uppercase;letter-spacing:.05em}
+.num input{font-family:var(--mono);font-size:.9rem;padding:6px 8px;border:var(--border-hard);background:var(--white);color:var(--ink);width:100%}
+ol.trail{margin:0;padding-left:1.2em;display:grid;gap:4px}
+footer{padding-block:8px;color:var(--ink-soft);font-size:.9rem}
+@media (max-width:720px){header,section{box-shadow:var(--shadow-sm);padding:16px}body{padding-inline:12px}}
+@media (max-width:520px){.slider{grid-template-columns:1fr 56px}.slider label{grid-column:1/-1}.hbar{grid-template-columns:110px 1fr 44px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+.coefs{display:grid;gap:8px}
+.coef{display:grid;grid-template-columns:90px 1fr 56px;gap:8px;align-items:center;font-family:var(--mono);font-size:.78rem}
+.coef>*{min-width:0}
+.coef .t{position:relative;height:18px;background:var(--surface);border:1px solid var(--ink)}
+.coef .f{position:absolute;top:0;bottom:0;left:0;background:var(--paper-strong);transition:width .18s ease}
+.coef .z{color:var(--negative);font-weight:700}
+.coef span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.folds{display:grid;gap:4px}
+.fold-row{display:grid;grid-template-columns:56px repeat(5,minmax(0,1fr));gap:4px;font-family:var(--mono);font-size:.72rem;align-items:center}
+.fold-row span.c{height:20px;border:1px solid var(--ink);background:var(--accent);display:flex;align-items:center;justify-content:center}
+.fold-row span.c.v{background:var(--ink);color:var(--paper-strong);font-weight:700}
+table.heat td{text-align:center;cursor:pointer;min-width:58px;font-size:.74rem}
+table.heat td.best{outline:3px solid var(--accent-coral);outline-offset:-3px;font-weight:800}
+table.heat td.sel{outline:3px solid var(--ink);outline-offset:-3px}
+</style>
+<div class="wrap">
+<header>
+  <span class="eyebrow">Machine Learning &amp; Forecasting · Lesson 3</span>
+  <h1>Ridge, Lasso &amp; Grid</h1>
+  <p class="lede">A study guide for <code>3 - Reg &amp; CV &amp; GS (Exc).ipynb</code>, the Ames house-price exercise. Part A goes back over the lesson with the numbers from your own notebook. Part B walks the exercise task by task: what to do, hints that get stronger as you open them, and a checkpoint. You write the code this time. Open a hint only after you've tried.</p>
+  <span class="coords">Advertising: 200 markets, sales in thousands of units · Ames, Iowa: 2,925 houses, 273 features, median price $160,000</span>
+  <nav class="toc" aria-label="Contents">
+    <a href="#question">The question</a><a href="#penalty">Ridge vs Lasso</a><a href="#scaling">Scaling</a><a href="#cv">Cross-validation</a><a href="#grid">GridSearchCV</a>
+    <a href="#t1">Exercise tasks</a><a href="#heat">Check your grid</a><a href="#oral">Oral prep</a>
+  </nav>
+</header>
+
+<div class="part">Part A · The lesson, with your numbers</div>
+
+<section id="question">
+  <span class="stepno">IDEA 1 · THE QUESTION</span>
+  <h2>Picking alpha without peeking</h2>
+  <p>Ridge, Lasso and ElasticNet each have a dial called <code>alpha</code>. The model can't learn alpha from the data; you choose it. Those settings are called <b>hyperparameters</b>. The whole notebook asks one question: how do you choose alpha without using the test set? The test set is your final exam. If you pick the setting that scores best on it, the score stops being an honest prediction for new data.</p>
+  <p>Your notebook answers the question four times, each time a bit better:</p>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th style="text-align:left">Alpha chosen with</th><th>Ridge α=100</th><th>Ridge α=1</th><th style="text-align:left">Weak spot</th></tr>
+    <tr><td>1</td><td style="text-align:left">the test set</td><td>7.34</td><td>2.32</td><td style="text-align:left">you tuned on the exam</td></tr>
+    <tr><td>2</td><td style="text-align:left">a validation set (15%)</td><td>7.32</td><td>2.38</td><td style="text-align:left">only 30 rows decide</td></tr>
+    <tr><td>3</td><td style="text-align:left">5-fold cross-validation</td><td>8.22</td><td>3.34</td><td style="text-align:left">you loop over alphas by hand</td></tr>
+    <tr><td>4</td><td style="text-align:left">GridSearchCV</td><td colspan="2">best: α=0.1, l1_ratio=1</td><td style="text-align:left">slow when the grid is big</td></tr>
+  </table></div>
+  <p class="small muted">All numbers are MSE in (thousands of units)². Every method agrees that α=1 beats α=100. What changes is how much you can trust that conclusion.</p>
+</section>
+
+<section id="penalty">
+  <span class="stepno">IDEA 2 · REGULARIZATION</span>
+  <h2>A fine for big coefficients</h2>
+  <p>Plain linear regression only tries to make the errors small. Regularization adds a fine for large coefficients, and alpha sets how big that fine is:</p>
+  <pre>Ridge:  error + α × (β₁² + β₂² + β₃²)        squares: shrinks everything, rarely to 0
+Lasso:  error + α × (|β₁| + |β₂| + |β₃|)     absolute values: pushes weak features to exactly 0</pre>
+  <p>Move the slider. These are the real coefficients on your Advertising split (scaled features, <code>random_state=101</code>).</p>
+  <div class="box">
+    <div class="btns" role="group" aria-label="Model">
+      <button id="m-ridge" aria-pressed="true">Ridge</button>
+      <button id="m-lasso" aria-pressed="false">Lasso</button>
+    </div>
+    <div class="slider"><label for="alpha">alpha</label><input id="alpha" type="range" min="0" max="9" step="1" value="3"><output id="alpha-o"></output></div>
+    <div class="coefs" id="coefs"></div>
+    <p class="verdict">Test MSE: <span id="mse" class="mono"></span></p>
+    <p class="small muted" id="coef-note"></p>
+  </div>
+  <div class="quiz" data-answer="b">
+    <p><b>Check:</b> with Lasso, which coefficient hits 0 first, and why does that make sense?</p>
+    <div class="opts"><button data-v="a">TV, it has the biggest budget</button><button data-v="b">newspaper, it barely helps</button><button data-v="c">radio, it's in the middle</button></div>
+    <p class="fb" data-ok="Right. Newspaper is 0 from the smallest alpha on. In your correlation heatmap it had the weakest link to sales, so dropping it costs almost nothing. That is Lasso doing feature selection for you." data-no="Slide alpha up slowly with Lasso selected and watch which bar disappears first. Then think back to your correlation heatmap."></p>
+  </div>
+</section>
+
+<section id="scaling">
+  <span class="stepno">IDEA 3 · WHY SCALE FIRST</span>
+  <h2>Scale before you fine</h2>
+  <p>The fine is on the size of a coefficient, and that size depends on the unit. Measure TV in thousands instead of units and its coefficient grows 1,000 times, so its fine does too. Scaling puts every feature at mean 0 and standard deviation 1, so the fine treats them equally.</p>
+  <div class="grid2">
+    <div class="box"><h3>fit</h3><p class="small">Learns the mean and standard deviation. Only on <code>X_train</code>: TV mean 151.66, std 84.26 in your notebook.</p></div>
+    <div class="box"><h3>transform</h3><p class="small">Applies those training numbers. On <code>X_train</code> and on <code>X_test</code>. The test set never gets its own mean.</p></div>
+  </div>
+  <p class="small muted">If you fit the scaler on all the data, the test rows have leaked into training a little. Lesson 6 is about exactly that problem (data leakage).</p>
+</section>
+
+<section id="cv">
+  <span class="stepno">IDEA 4 · CROSS-VALIDATION</span>
+  <h2>Five small exams</h2>
+  <p>A single validation set of 30 rows can be lucky or unlucky. With 5-fold cross-validation, the 140 training rows are cut into 5 folds of 28. Each fold takes one turn as the validation set while the model trains on the other 4. You get 5 scores and average them.</p>
+  <div class="box">
+    <div class="folds" id="folds" aria-label="5-fold diagram"></div>
+    <div class="btns" role="group" aria-label="Alpha for fold scores">
+      <button id="cv100" aria-pressed="true">Ridge α=100</button>
+      <button id="cv1" aria-pressed="false">Ridge α=1</button>
+    </div>
+    <div class="hbars" id="foldbars"></div>
+    <p class="verdict">Average MSE: <span id="cvavg" class="mono"></span></p>
+    <p class="small muted">Look at the spread for α=100: one fold says 4.94, another 11.40. A single validation split could have given you either number.</p>
+  </div>
+  <div class="gotcha"><span class="eyebrow">Why the scores are negative</span>
+    <p class="small"><code>cross_val_score</code> and <code>GridSearchCV</code> always pick the <i>highest</i> score. For MSE lower is better, so scikit-learn flips the sign: <code>scoring='neg_mean_squared_error'</code>. −3.34 beats −8.22. Take <code>abs()</code> or multiply by −1 when you report it.</p></div>
+</section>
+
+<section id="grid">
+  <span class="stepno">IDEA 5 · GRIDSEARCHCV</span>
+  <h2>Every combination, five times</h2>
+  <p>GridSearchCV is the loop from Idea 4 done for you. You hand it a model, a dictionary of values to try and a CV setting. It tries every combination with cross-validation, keeps the best, and then retrains that one on all the training data.</p>
+  <pre>param_grid = {'alpha':    [0.1, 1, 5, 10, 50, 100],          # 6 values
+              'l1_ratio': [.1, .5, .7, .9, .95, .99, 1]}      # 7 values
+                                     6 × 7 = 42 combinations × 5 folds = 210 fits</pre>
+  <div class="grid2">
+    <div class="box"><h3>ElasticNet</h3><p class="small">A mix of both fines. <code>l1_ratio=1</code> is pure Lasso, <code>l1_ratio</code> close to 0 is almost pure Ridge.</p></div>
+    <div class="box"><h3>After <code>.fit()</code></h3><p class="small"><code>best_params_</code> gives the winner, <code>best_estimator_</code> the retrained model, <code>cv_results_</code> every score.</p></div>
+  </div>
+  <div class="quiz" data-answer="c">
+    <p><b>Check:</b> your Advertising grid search picked α=0.1 with l1_ratio=1. What model is that?</p>
+    <div class="opts"><button data-v="a">Ridge with a strong fine</button><button data-v="b">Plain linear regression</button><button data-v="c">Lasso with a small fine</button></div>
+    <p class="fb" data-ok="Yes. l1_ratio=1 means only the Lasso fine, and α=0.1 keeps it small. With only 3 features there isn't much to remove, so a light touch wins." data-no="Look at the ElasticNet box above: what does l1_ratio=1 mean? Then: is 0.1 a big or a small fine?"></p>
+  </div>
+</section>
+
+<div class="part">Part B · The exercise: Ames house prices</div>
+
+<section id="t1">
+  <span class="stepno">TASKS 1–3 · DATA, SPLIT, SCALE</span>
+  <h2>Same steps, bigger table</h2>
+  <p>You already loaded the data and ran <code>describe()</code>. The Ames table has 2,925 houses and 274 columns, and no missing values: the course already cleaned it and turned the text columns into dummies. Prices go from $12,789 to $755,000.</p>
+  <div class="task"><b>Your task.</b> (1) Put <code>SalePrice</code> in <code>y</code> and everything else in <code>X</code>. (2) Split with <code>test_size=0.1</code>, <code>random_state=101</code>. (3) Scale.</div>
+  <details><summary>Hint 1: why only 10% for testing?</summary><div><p class="small">Grid search needs a lot of training rows, because cross-validation cuts them into folds again. 10% of 2,925 still leaves 293 test houses.</p></div></details>
+  <details><summary>Hint 2: shapes to check</summary><div><p class="small">After the split: <code>X_train</code> has 2,632 rows, <code>X_test</code> 293. Both have 273 columns.</p></div></details>
+  <details><summary>Hint 3: scaling skeleton</summary><div><pre>scaler = StandardScaler()
+scaled_X_train = scaler.___(X_train)
+scaled_X_test  = scaler.___(X_test)     # which one may NOT use fit?</pre></div></details>
+</section>
+
+<section id="t4">
+  <span class="stepno">TASKS 4–6 · MODEL, GRID, SEARCH</span>
+  <h2>Set up the search</h2>
+  <div class="task"><b>Your task.</b> (4) Create a default <code>ElasticNet()</code>. (5) Write a <code>param_grid</code> dictionary for <code>alpha</code> and <code>l1_ratio</code>. (6) Create a <code>GridSearchCV</code> and fit it on the scaled training data.</div>
+  <details><summary>Hint 1: the grid</summary><div><p class="small">You can reuse the grid from the Advertising notebook (Idea 5). Keys must match the parameter names of <code>ElasticNet</code> exactly.</p></div></details>
+  <details><summary>Hint 2: GridSearchCV skeleton</summary><div><pre>grid_model = GridSearchCV(estimator=___,
+                          param_grid=___,
+                          scoring='neg_mean_squared_error',
+                          cv=5,
+                          verbose=1)
+grid_model.fit(___, ___)</pre></div></details>
+  <div class="gotcha"><span class="eyebrow">It will be slow, and it may warn you</span>
+    <p class="small">With 273 features, Lasso-heavy combinations take seconds each. On my run the 210 fits took about 100 seconds with <code>n_jobs=-1</code> (uses all your CPU cores). You may also see a <code>ConvergenceWarning</code>: the solver stopped before it was finished. The fix is <code>ElasticNet(max_iter=1000000)</code>, which gives it more steps. That also makes it slower, so start with a small grid to test your code.</p></div>
+</section>
+
+<section id="t7">
+  <span class="stepno">TASKS 7–8 · BEST PARAMETERS AND THE FINAL EXAM</span>
+  <h2>Grade it once</h2>
+  <div class="task"><b>Your task.</b> (7) Show the best parameters. (8) Predict on the scaled test set and compute MAE and RMSE. The notebook says the solution got MAE $14,149 and RMSE $20,532.</div>
+  <details><summary>Hint 1: which attribute?</summary><div><p class="small">The fitted attributes end in <code>_</code>, like in lesson 2. One of them is a dictionary with the winning values.</p></div></details>
+  <details><summary>Hint 2: metrics</summary><div><pre>from sklearn.metrics import mean_absolute_error, root_mean_squared_error
+mean_absolute_error(y_test, ___)
+root_mean_squared_error(y_test, ___)</pre></div></details>
+  <div class="gotcha"><span class="eyebrow">Version trap · scikit-learn 1.9</span>
+    <p class="small">Older solutions write <code>mean_squared_error(..., squared=False)</code> for RMSE. Your version removed that argument and raises a <code>TypeError</code>. Use <code>root_mean_squared_error</code>, or <code>np.sqrt(mean_squared_error(...))</code>.</p></div>
+  <p class="small">Checkpoint: with the grid from Idea 5 and <code>max_iter=1000000</code> I got MAE <b>$14,195</b> and RMSE <b>$20,559</b>. Within a few dozen dollars of the solution is normal; library versions differ slightly.</p>
+</section>
+
+<section id="heat">
+  <span class="stepno">AFTER YOUR RUN · READ THE RESULTS</span>
+  <h2>What the grid saw</h2>
+  <p>Only open this after your own grid search has finished. It shows the cross-validated RMSE for each of the 42 combinations from my run: darker is better.</p>
+  <details><summary>Show the grid results</summary><div>
+    <div class="scroll"><table class="heat" id="heattable"></table></div>
+    <p class="small" id="heatinfo">Click a cell to read it.</p>
+    <p class="small">Three questions to answer in your notebook, in your own words:</p>
+    <ol class="trail small">
+      <li>Why does the bottom-left corner (strong fine, mostly Ridge) do so badly?</li>
+      <li>The winner sits at the edge of the grid: α=100, the largest value tried. What does that suggest you should try next?</li>
+      <li>The winning model keeps 207 of the 273 features. Which kind of penalty set the other 66 to zero?</li>
+    </ol>
+  </div></details>
+</section>
+
+<section id="oral">
+  <span class="stepno">ORAL EXAM PREP · 70% OF YOUR GRADE</span>
+  <h2>Say these out loud</h2>
+  <ol class="trail">
+    <li>What is a hyperparameter? Give two examples from lessons 2 and 3.</li>
+    <li>Why can't you choose alpha with the test set?</li>
+    <li>Ridge vs Lasso: what's the difference in the penalty, and what happens to weak features?</li>
+    <li>Why scale before regularizing, and why fit the scaler on the training set only?</li>
+    <li>How does 5-fold cross-validation work, and why is it better than one validation split?</li>
+    <li>Why are the scores negative in <code>neg_mean_squared_error</code>?</li>
+    <li>What does GridSearchCV do after it has found the best combination?</li>
+    <li>Too much regularization: is that overfitting or underfitting?</li>
+  </ol>
+</section>
+
+<footer>Numbers computed from your <span class="mono">Advertising.csv</span> and <span class="mono">AMES_Final_DF.csv</span> with scikit-learn 1.9.1, the same split settings as your notebooks.</footer>
+</div>
+<script>
+document.querySelectorAll('.quiz').forEach(q=>{const fb=q.querySelector('.fb');
+  q.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    q.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');
+    const ok=b.dataset.v===q.dataset.answer;fb.textContent=ok?fb.dataset.ok:fb.dataset.no;fb.className='fb '+(ok?'ok':'no');}));});
+// ---- regularization toy (real values, Advertising, scaled, rs=101)
+const ALPHAS=[0.01,0.1,0.3,1,3,10,30,100,300,1000];
+const D={ridge:[[3.766,2.765,-0.007,2.3],[3.763,2.763,-0.006,2.3],[3.758,2.759,-0.004,2.3],[3.74,2.745,0.003,2.32],[3.688,2.704,0.021,2.37],[3.518,2.573,0.077,2.58],[3.112,2.266,0.187,3.49],[2.223,1.62,0.312,7.34],[1.23,0.909,0.279,14.76],[0.482,0.363,0.139,22.76]],
+ lasso:[[3.756,2.754,0,2.31],[3.672,2.67,0,2.39],[3.485,2.483,0,2.68],[2.832,1.83,0,4.89],[0.964,0,0,21.34],[0,0,0,29.16],[0,0,0,29.16],[0,0,0,29.16],[0,0,0,29.16],[0,0,0,29.16]]};
+const FEAT=['TV','radio','newspaper'];let model='ridge';
+const aIn=document.getElementById('alpha');
+function drawCoefs(){const i=+aIn.value,row=D[model][i];
+  document.getElementById('alpha-o').textContent=ALPHAS[i];
+  document.getElementById('coefs').innerHTML=FEAT.map((f,k)=>{const v=row[k],w=Math.min(Math.abs(v)/3.8*100,100);
+    return `<div class="coef"><span>${f}</span><div class="t"><div class="f" style="width:${w}%"></div></div><span class="${v===0?'z':''}">${v===0?'0':v.toFixed(2)}</span></div>`}).join('');
+  document.getElementById('mse').textContent=row[3].toFixed(2);
+  const zeros=row.slice(0,3).filter(v=>v===0).length;
+  document.getElementById('coef-note').textContent= model==='lasso'
+    ? (zeros===3?'Every coefficient is 0: the model predicts the average sales for every market. That is underfitting in its purest form.':zeros?`${zeros} feature${zeros>1?'s':''} switched off completely.`:'All three features still in use.')
+    : (i>=7?'Ridge shrinks all three, but none reaches exactly 0. Test MSE climbs: too much fine, so the model underfits.':'Ridge barely changes anything yet. Test MSE stays close to plain linear regression (2.30).');
+  document.getElementById('m-ridge').setAttribute('aria-pressed',model==='ridge');document.getElementById('m-lasso').setAttribute('aria-pressed',model==='lasso');}
+aIn.addEventListener('input',drawCoefs);
+document.getElementById('m-ridge').onclick=()=>{model='ridge';drawCoefs()};
+document.getElementById('m-lasso').onclick=()=>{model='lasso';drawCoefs()};
+drawCoefs();
+// ---- folds
+let html='';for(let r=0;r<5;r++){html+=`<div class="fold-row"><span>turn ${r+1}</span>`;for(let c=0;c<5;c++)html+=`<span class="c ${c===r?'v':''}">${c===r?'validate':'train'}</span>`;html+='</div>'}
+document.getElementById('folds').innerHTML=html;
+const CV={a100:[9.33,4.94,11.40,7.02,8.39],a1:[3.16,1.58,5.40,2.22,4.37]};
+function drawCV(k){const s=CV[k];document.getElementById('foldbars').innerHTML=s.map((v,i)=>`<div class="hbar"><span>fold ${i+1}</span><div class="t"><div class="f" style="width:${v/12*100}%"></div></div><span>${v.toFixed(2)}</span></div>`).join('');
+  document.getElementById('cvavg').textContent=(s.reduce((a,b)=>a+b,0)/5).toFixed(2);
+  document.getElementById('cv100').setAttribute('aria-pressed',k==='a100');document.getElementById('cv1').setAttribute('aria-pressed',k==='a1');}
+document.getElementById('cv100').onclick=()=>drawCV('a100');document.getElementById('cv1').onclick=()=>drawCV('a1');drawCV('a100');
+// ---- heatmap (CV RMSE, Ames, my run)
+const HA=[0.1,1,5,10,50,100],HL=[0.1,0.5,0.7,0.9,0.95,0.99,1];
+const H=[[23286,23086,22996,22958,22983,23069,23318],[27008,25283,24334,23335,23083,22953,23258],[37140,32323,29240,25286,24085,23070,23070],[44698,38165,33669,27414,25289,23318,23000],[65278,58137,51324,38212,32375,25317,22787],[71722,66436,60513,46098,38271,27506,22689]];
+const mn=22689,mx=71722;
+let t='<tr><th>α ↓ · l1_ratio →</th>'+HL.map(l=>`<th>${l}</th>`).join('')+'</tr>';
+H.forEach((r,i)=>{t+=`<tr><th>${HA[i]}</th>`+r.map((v,j)=>{const p=Math.round(85-(v-mn)/(mx-mn)*80);const dark=p>55;
+  return `<td tabindex="0" data-i="${i}" data-j="${j}" class="${v===mn?'best':''}" style="background:color-mix(in srgb, var(--paper-strong) ${p}%, var(--white));color:var(--ink)">${(v/1000).toFixed(1)}k</td>`}).join('')+'</tr>'});
+const ht=document.getElementById('heattable');ht.innerHTML=t;
+ht.querySelectorAll('td').forEach(td=>{const f=()=>{ht.querySelectorAll('td').forEach(x=>x.classList.remove('sel'));td.classList.add('sel');
+  const i=+td.dataset.i,j=+td.dataset.j,v=H[i][j];
+  document.getElementById('heatinfo').textContent=`α=${HA[i]}, l1_ratio=${HL[j]}: a typical cross-validation miss of $${v.toLocaleString('en-US')}.`+(v===mn?' This is the winner.':` That is $${(v-mn).toLocaleString('en-US')} worse than the best.`)};
+  td.addEventListener('click',f);td.addEventListener('keydown',e=>{if(e.key==='Enter')f()})});
+</script>
+
+</html>
