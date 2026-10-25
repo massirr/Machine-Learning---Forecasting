@@ -40,3 +40,7 @@ Still to work on:
 - Understood: why 3.1 gives 100% (memorizing), TP/FN from probabilities at a threshold, the Pipeline/ColumnTransformer recipe (5 columns → 36), scaling before the split changes mean/std (LotArea mean 10,719 train vs 10,517 all).
 - Reading scores (in my Pipelines notes, after Key Takeaways): train 0.874 / CV 0.860 / test 0.866 agree, so no overfitting or leakage. Train >> CV/test means overfitting; CV/test suspiciously high (0.956 AUC in the exercise) means suspect leakage.
 - Misconception fixed: I first thought CV uses "data not used in training"; it actually splits X_train into 5 folds.
+- Scaling (2026-10-21): scaled = (value − mean) / std, i.e. "steps from average". I first said the mean becomes 1 after scaling; it becomes 0 (std becomes 1). One mean/std per column, shared by all rows.
+- fit learns the numbers (train only), transform uses them on anything. A 4-bath test house gets (4 − 1.56) / 0.55 ≈ +4.4: fine, just information (the model extrapolates).
+- `handle_unknown="ignore"`: an unseen category (e.g. HouseStyle "3Story") becomes all-zero columns instead of a ValueError.
+- Check again: in a CV round, the imputer/scaler are fit on that round's 4 training folds (~934 houses), not on the held-out fold and never on X_test. My answer ("the splits out of the test split") was vague.
