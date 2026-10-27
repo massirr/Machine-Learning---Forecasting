@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StreamBox: Data Leakage &amp; Pipelines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#16191e; --ink-soft:#3d444d;
+  --paper:#f4f4f2; --surface:#f7f8f5; --accent:#b0c9e2; --paper-strong:#649fd3;
+  --accent-coral:#e28568; --accent-apricot:#ecaa4f; --accent-rose:#d983ae;
+  --positive:#2e7d4f; --negative:#c0392b; --white:#ffffff;
+  --border-hard:2px solid var(--ink);
+  --shadow:7px 7px 0 var(--ink); --shadow-sm:5px 5px 0 var(--ink);
+  --font:Manrope,"Avenir Next","Segoe UI Variable","Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html{overflow-x:hidden}
+*{border-radius:0!important;box-sizing:border-box}
+body{color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(22,25,30,0.14) 1.5px,transparent 1.5px);background-size:22px 22px;
+  padding-inline:24px;padding-block:32px 64px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:28px}
+.wrap>*{min-width:0}
+h1,h2,h3{font-weight:800;line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.85rem,3.5vw,3rem);line-height:1;letter-spacing:-.03em;max-width:18ch}
+h2{display:inline-block;justify-self:start;font-size:1.25rem;padding:.45rem .8rem;background:var(--paper-strong);color:var(--ink)}
+section:nth-of-type(4n+2) h2{background:var(--accent-coral)}
+section:nth-of-type(4n+3) h2{background:var(--accent-apricot)}
+section:nth-of-type(4n) h2{background:var(--accent-rose)}
+h3{font-size:1rem}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.84em;overflow-wrap:anywhere}
+code{background:var(--white);border:1px solid var(--ink);padding:0 4px}
+.eyebrow,.stepno,.part{font-size:.8rem;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+header,section{background:var(--surface);border:var(--border-hard);box-shadow:var(--shadow);padding:24px;display:grid;gap:16px}
+.lede{color:var(--ink-soft);max-width:64ch}
+.coords{font-family:var(--mono);font-size:.76rem;color:var(--ink-soft)}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:.85rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--white);border:var(--border-hard);padding:4px 10px;transition:transform .18s ease,background-color .18s ease}
+nav.toc a:hover{background:var(--accent);transform:translateY(-1px)}
+.part{padding-block:8px 0;font-size:.9rem;color:var(--ink)}
+.task{background:var(--accent);border:var(--border-hard);padding:12px 16px}
+.task b{font-weight:800}
+details{border:var(--border-hard);background:var(--white)}
+details summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+ ";font-weight:800}
+details[open] summary::before{content:"– "}
+details[open] summary{border-bottom:var(--border-hard)}
+details>div{padding:12px 14px 14px;display:grid;gap:10px}
+summary:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible,td:focus-visible{outline:3px solid var(--paper-strong);outline-offset:2px}
+pre{background:var(--white);border:var(--border-hard);padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.5;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.grid2>*{min-width:0}
+.box{background:var(--white);border:var(--border-hard);padding:14px;display:grid;gap:10px;min-width:0}
+.box>*{min-width:0}
+.muted{color:var(--ink-soft)} .small{font-size:.9rem}
+button{font-family:var(--font);font-size:.9rem;font-weight:700;border:var(--border-hard);background:var(--accent);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .18s ease,background-color .18s ease}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper-strong)}
+.btns{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-family:var(--mono);font-size:.8rem;font-variant-numeric:tabular-nums;background:var(--white)}
+th,td{border:1px solid var(--ink);padding:6px 10px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink);font-weight:700;background:var(--surface)}
+.gotcha{border:var(--border-hard);border-left:8px solid var(--negative);padding:12px 14px;background:var(--white);display:grid;gap:6px}
+.gotcha .eyebrow{color:var(--negative)}
+.quiz{display:grid;gap:10px}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:12px;padding-bottom:6px}
+.fb{font-size:.92rem;min-height:1.4em;font-weight:600}
+.fb.ok{color:var(--positive)} .fb.no{color:var(--negative)}
+.slider{display:grid;grid-template-columns:170px 1fr 80px;gap:10px;align-items:center;font-family:var(--mono);font-size:.78rem}
+.slider>*{min-width:0}
+.slider output{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ink)}
+.verdict{font-size:1.1rem;font-weight:800}
+.hbars{display:grid;gap:6px}
+.hbar{display:grid;grid-template-columns:180px 1fr 64px;gap:8px;align-items:center;font-family:var(--mono);font-size:.76rem}
+.hbar>*{min-width:0}
+.hbar .t{height:14px;background:var(--surface);border:1px solid var(--ink);position:relative}
+.hbar .f{position:absolute;inset:0 auto 0 0;background:var(--paper-strong)}
+.hbar span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.hbar .f.bad{background:var(--negative)}
+.cm td{text-align:center;min-width:52px;cursor:pointer}
+.cm td.tp{font-weight:700;color:var(--positive)}
+.cm td.fp{color:var(--negative);font-weight:700}
+.cm td.fn{color:var(--negative);font-weight:700}
+.cm td.tn{font-weight:700;color:var(--positive)}
+.cm td.sel{background:var(--accent)}
+ol.trail{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.pipe-row{display:flex;align-items:center;flex-wrap:wrap;gap:0}
+.pipe-step{background:var(--white);border:var(--border-hard);padding:8px 14px;font-family:var(--mono);font-size:.78rem;font-weight:700}
+.pipe-arrow{font-size:1.2rem;padding:0 6px;color:var(--ink-soft)}
+footer{padding-block:8px;color:var(--ink-soft);font-size:.9rem}
+@media (max-width:720px){header,section{box-shadow:var(--shadow-sm);padding:16px}body{padding-inline:12px}}
+@media (max-width:560px){.slider{grid-template-columns:1fr 70px}.slider label{grid-column:1/-1}.hbar{grid-template-columns:120px 1fr 52px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Machine Learning &amp; Forecasting · Lesson 6</span>
+  <h1>StreamBox: Data Leakage &amp; Pipelines</h1>
+  <p class="lede">Revision guide for <code>6 - Data Leakage (Exc) (my notes).ipynb</code> (StreamBox churn data). Part A builds intuition: what leakage is, where it hides, and how a Pipeline seals it. Part B walks the exercise section by section with oral-exam questions.</p>
+  <span class="coords">StreamBox · 2,000 synthetic customers · 11 columns · churn rate 38.15% · 3 missing columns: age 153, weekly_usage_hours 185, payment_method 105</span>
+  <nav class="toc" aria-label="Contents">
+    <a href="#leakage">What is leakage?</a>
+    <a href="#threshold">Threshold &amp; confusion</a>
+    <a href="#pipeline">Pipeline anatomy</a>
+    <a href="#supervised-leak">Supervised leakage</a>
+    <a href="#s2">Exercise: Target Leakage</a>
+    <a href="#s3">Exercise: Split &amp; Prep</a>
+    <a href="#s5">Exercise: Pipeline</a>
+    <a href="#s6">Exercise: GridSearch</a>
+    <a href="#s7">Scenarios</a>
+    <a href="#oral">Oral prep</a>
+  </nav>
+</header>
+
+<div class="part">Part A · The ideas</div>
+
+<section id="leakage">
+  <span class="stepno">IDEA 1 · THE TWO TYPES OF DATA LEAKAGE</span>
+  <h2>When information from the future sneaks in</h2>
+  <p><b>Data leakage</b> happens when information that would not be available at real prediction time is used to build or evaluate the model. It produces scores that are too good and models that fail in production.</p>
+  <div class="grid2">
+    <div class="box">
+      <h3>Target leakage</h3>
+      <p class="small">A feature is created <b>after</b> (or because of) the outcome. The model learns a shortcut that doesn't exist in production.</p>
+      <p class="small muted">StreamBox example: <code>retention_offer_sent</code> is sent <i>after</i> the customer decides to cancel. At prediction time it is always 0.</p>
+    </div>
+    <div class="box">
+      <h3>Train-test contamination</h3>
+      <p class="small">Information from the test (validation) set leaks into the training process — usually through a preprocessing step that sees all the data at once.</p>
+      <p class="small muted">Examples: scaling on all data before splitting, feature selection on all data, oversampling before CV folds.</p>
+    </div>
+  </div>
+  <div class="gotcha">
+    <span class="eyebrow">Key signal: suspiciously good scores</span>
+    <p class="small">A single feature with AUC 0.956 (like <code>retention_offer_sent</code>) should be an immediate red flag. Honest features on this dataset reach only ~0.70. Leaky features look like geniuses in the lab and idiots in production.</p>
+  </div>
+  <div class="quiz" data-answer="b">
+    <p><b>Check:</b> the marketing team runs a model first thing Monday morning, before any customer has called to cancel this month. What is the value of <code>retention_offer_sent</code> for every row?</p>
+    <div class="opts"><button data-v="a">Either 0 or 1, depending on last month's history</button><button data-v="b">Always 0 — no offer has been sent yet</button><button data-v="c">It depends on the threshold</button></div>
+    <p class="fb" data-ok="Exactly. At prediction time the retention team hasn't acted yet. So the model sees retention_offer_sent = 0 for everyone. A model that relied on this column to decide who churns will now predict nobody churns — recall drops to 0.00." data-no="Think about timing. The offer is sent *after* the customer calls to cancel. On Monday morning, no one has called yet. So the feature is 0 for every active customer."></p>
+  </div>
+</section>
+
+<section id="threshold">
+  <span class="stepno">IDEA 2 · THRESHOLDS, TP, FP, FN, TN</span>
+  <h2>The threshold decides: TP or FN?</h2>
+  <p>A model outputs a <b>probability</b>, not a label. You pick a threshold to turn it into a prediction. Everything above → predict 1 (will churn), everything below → predict 0 (stays).</p>
+  <div class="box">
+    <h3>Interactive threshold explorer</h3>
+    <div class="slider"><label for="thr">Threshold</label><input id="thr" type="range" min="0.01" max="0.99" step="0.01" value="0.50"><output id="thro"></output></div>
+    <div class="slider"><label for="prob">Customer probability</label><input id="prob" type="range" min="0.01" max="0.99" step="0.01" value="0.37"><output id="probo"></output></div>
+    <div class="slider"><label for="truth">True label</label><input id="truth" type="range" min="0" max="1" step="1" value="1"><output id="trutho"></output></div>
+    <p class="verdict" id="verdict-thr"></p>
+    <p class="small muted" id="thr-explain"></p>
+    <div class="btns">
+      <button onclick="setThr(0.50,0.37,1)">Warmup case (thr 0.50)</button>
+      <button onclick="setThr(0.30,0.37,1)">Warmup case (thr 0.30)</button>
+      <button onclick="setThr(0.50,0.80,0)">False Positive</button>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="box">
+      <h3>Confusion matrix (2×2)</h3>
+      <div class="scroll"><table class="cm">
+        <tr><th>true ↓ / pred →</th><th>Predicted 0</th><th>Predicted 1</th></tr>
+        <tr><th>True 0 (stays)</th><td class="tn" title="True Negative">TN</td><td class="fp" title="False Positive">FP</td></tr>
+        <tr><th>True 1 (churns)</th><td class="fn" title="False Negative">FN</td><td class="tp" title="True Positive">TP</td></tr>
+      </table></div>
+      <p class="small muted">TP &amp; TN = correct. FP &amp; FN = mistakes.</p>
+    </div>
+    <div class="box">
+      <h3>FP vs FN: which matters?</h3>
+      <p class="small"><b>FN (miss a churner):</b> Customer leaves silently. Revenue lost forever.</p>
+      <p class="small"><b>FP (flag a loyal customer):</b> Marketing sends an unnecessary discount email. Small cost.</p>
+      <p class="small muted">For churn, FN is far more expensive → lower the threshold to catch more churners (more TP, fewer FN), accepting more FP. This depends on the business, not a universal rule.</p>
+    </div>
+  </div>
+  <div class="quiz" data-answer="c">
+    <p><b>Check:</b> the model predicts probability 0.80 for a customer who actually stays (true label 0). At threshold 0.50, this is a…</p>
+    <div class="opts"><button data-v="a">True Negative</button><button data-v="b">True Positive</button><button data-v="c">False Positive</button><button data-v="d">False Negative</button></div>
+    <p class="fb" data-ok="Correct. The model predicted 1 (≥0.50), but the truth was 0. Predicted 1, truth 0 → False Positive." data-no="Work out: predicted = prob ≥ threshold = 0.80 ≥ 0.50 → predict 1. Truth = 0. So the model said churn, but the customer stayed. That's a False Positive."></p>
+  </div>
+</section>
+
+<section id="pipeline">
+  <span class="stepno">IDEA 3 · HOW A PIPELINE SEALS LEAKAGE</span>
+  <h2>The Pipeline: one object, no leaks</h2>
+  <p>Without a Pipeline, you fit your imputer and scaler on all data first, then run cross-validation on the already-transformed data. The scaler has already "seen" the validation fold's values — a small but real leak for imputation/scaling, and a catastrophic one for feature selection (as in Section 4.2).</p>
+  <div class="box">
+    <h3>Wrong way (preprocessing outside CV)</h3>
+    <div class="pipe-row">
+      <div class="pipe-step" style="background:var(--accent-coral)">All data → fit imputer &amp; scaler</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">Transformed X (train+test mixed)</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" style="background:var(--accent-coral)">cross_val_score</div>
+    </div>
+    <p class="small muted">❌ Validation folds saw the imputer/scaler training step. For supervised steps like SelectKBest this gives wildly fake scores (AUC 0.876 on pure noise).</p>
+  </div>
+  <div class="box">
+    <h3>Right way (Pipeline inside CV)</h3>
+    <div class="pipe-row">
+      <div class="pipe-step">Raw X_train</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" style="background:var(--positive);color:var(--white)">Pipeline(imputer → scaler → model)</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step" style="background:var(--positive);color:var(--white)">cross_val_score</div>
+    </div>
+    <p class="small muted">✅ Inside each CV fold: Pipeline fits imputer+scaler only on the 4 training folds, transforms the held-out fold using those learned values. No leakage.</p>
+  </div>
+  <div class="box">
+    <h3>Full ColumnTransformer pipeline (Section 5)</h3>
+    <pre>numeric_transformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler",  StandardScaler())
+])
+categorical_transformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OneHotEncoder(handle_unknown="ignore"))
+])
+preprocessor = ColumnTransformer([
+    ("num", numeric_transformer, numeric_features),   # 5 cols → 5 cols
+    ("cat", categorical_transformer, categorical_features)  # 3 cols → 11 dummies
+])
+model = Pipeline([
+    ("preprocessor", preprocessor),   # 5 + 3 raw → 16 features
+    ("classifier",   LogisticRegression(max_iter=1000))
+])</pre>
+    <p class="small muted">5 numeric + 3 categorical = 8 input columns → 16 preprocessed features (5 scaled numerics + 3+4+4=11 one-hot columns). The model object handles missing values and unseen categories automatically, in every CV fold and in production.</p>
+  </div>
+  <div class="quiz" data-answer="a">
+    <p><b>Check:</b> in a 5-fold cross-validation round, on which data does the imputer learn its median values?</p>
+    <div class="opts"><button data-v="a">The 4 training folds of that round (~1280 rows)</button><button data-v="b">All 1600 X_train rows</button><button data-v="c">The full 2000-row dataset</button></div>
+    <p class="fb" data-ok="Correct! In each fold, the Pipeline's fit() method runs only on the 4 training folds. The held-out fold (~320 rows) is only ever transformed, never fitted. That's exactly what prevents leakage." data-no="With a Pipeline inside cross_val_score, only the 4 training folds are passed to fit(). The held-out validation fold is kept completely unseen — it only receives transform(), not fit_transform()."></p>
+  </div>
+</section>
+
+<section id="supervised-leak">
+  <span class="stepno">IDEA 4 · UNSUPERVISED VS SUPERVISED PREPROCESSING</span>
+  <h2>Why feature selection leaks, but scaling barely does</h2>
+  <p>Not all preprocessing steps are equal. The critical difference is whether the step looks at <b>y</b> (the labels).</p>
+  <div class="grid2">
+    <div class="box">
+      <h3>Unsupervised (doesn't see y)</h3>
+      <p class="small">Imputation, StandardScaler, MinMaxScaler, PCA</p>
+      <p class="small">Only uses feature distributions. Leaking these across folds on 1,600 rows shifts the score by &lt;0.001 — noise level.</p>
+      <p class="small muted">Wrong way AUC 0.7348 vs right way 0.7348 — identical.</p>
+    </div>
+    <div class="box">
+      <h3>Supervised (sees y — dangerous!)</h3>
+      <p class="small">SelectKBest, SelectFromModel, target encoding, SMOTE oversampling</p>
+      <p class="small">Searches for features correlated with y. On 2,000 random noise features, chance guarantees some will align. Leaking this step gives AUC 0.876 on pure random data.</p>
+      <p class="small muted">Right way inside Pipeline: AUC 0.425 (no better than chance).</p>
+    </div>
+  </div>
+  <div class="box">
+    <h3>The noise experiment (Section 4.2) — your numbers</h3>
+    <div class="hbars">
+      <div class="hbar"><span>Wrong way (leak)</span><div class="t"><div class="f bad" style="width:92%"></div></div><span>0.876</span></div>
+      <div class="hbar"><span>Chance level</span><div class="t"><div class="f" style="width:52%;background:var(--ink-soft)"></div></div><span>0.500</span></div>
+      <div class="hbar"><span>Right way (Pipeline)</span><div class="t"><div class="f" style="width:44%"></div></div><span>0.425</span></div>
+    </div>
+    <p class="small muted">The data is 100% random noise. An honest model should score ≈0.50. The leaky approach gives 0.876 because SelectKBest saw the validation labels when it chose features. A company that bought these clickstream features based on the wrong result would waste money on data that does nothing in production.</p>
+  </div>
+</section>
+
+<div class="part">Part B · Your exercise notebook</div>
+
+<section id="s2">
+  <span class="stepno">SECTION 2 · TARGET LEAKAGE (cells 18–32)</span>
+  <h2>retention_offer_sent: the time-machine feature</h2>
+  <p>The <code>groupby('churn').mean()</code> table is just arithmetic on the raw spreadsheet — nothing to do with model training. It reveals target leakage because the means are absurdly different between the two groups:</p>
+  <div class="scroll"><table>
+    <tr><th>Feature</th><th>churn = 0 (stayed)</th><th>churn = 1 (left)</th><th>Ratio</th></tr>
+    <tr><td>age</td><td>39.26</td><td>39.94</td><td>~1×</td></tr>
+    <tr><td>tenure_months</td><td>40.35</td><td>29.34</td><td>~1.4×</td></tr>
+    <tr><td>monthly_fee</td><td>€43.05</td><td>€47.99</td><td>~1.1×</td></tr>
+    <tr><td>support_calls</td><td>1.32</td><td>1.78</td><td>~1.3×</td></tr>
+    <tr><td style="color:var(--negative);font-weight:700">retention_offer_sent</td><td style="color:var(--negative)">0.037 (3.7%)</td><td style="color:var(--negative)">0.949 (94.9%)</td><td style="color:var(--negative)">25×</td></tr>
+  </table></div>
+  <p class="small muted">A 25× jump in one feature is a red flag. The causal arrow is backwards: customers <i>first</i> decide to leave → <i>then</i> call support → <i>then</i> the retention team sends an offer. The offer is a consequence of churning, not a predictor of it.</p>
+  <div class="box">
+    <h3>Crosstab (your numbers)</h3>
+    <div class="scroll"><table>
+      <tr><th>retention_offer_sent ↓ / churn →</th><th>0 (stayed)</th><th>1 (churned)</th></tr>
+      <tr><td>0 (no offer)</td><td>1,191</td><td>39</td></tr>
+      <tr><td>1 (offer sent)</td><td>46</td><td style="color:var(--negative);font-weight:700">724</td></tr>
+    </table></div>
+    <p class="small muted">724 of the 763 customers who received an offer churned anyway (they called to cancel). Only 46 who received an offer actually stayed — probably those the retention team persuaded.</p>
+  </div>
+  <div class="box">
+    <h3>The production simulation (your numbers)</h3>
+    <div class="hbars">
+      <div class="hbar"><span>CV AUC (leaky feature)</span><div class="t"><div class="f bad" style="width:98%"></div></div><span>0.956</span></div>
+      <div class="hbar"><span>Historical test accuracy</span><div class="t"><div class="f bad" style="width:97%"></div></div><span>0.955</span></div>
+      <div class="hbar"><span>Historical recall (churners)</span><div class="t"><div class="f bad" style="width:96%"></div></div><span>0.94</span></div>
+      <div class="hbar"><span>Production accuracy</span><div class="t"><div class="f" style="width:63%"></div></div><span>0.618</span></div>
+      <div class="hbar"><span style="color:var(--negative);font-weight:700">Production recall</span><div class="t"><div class="f bad" style="width:1%"></div></div><span style="color:var(--negative)">0.00</span></div>
+    </div>
+    <p class="small muted">Setting <code>retention_offer_sent = 0</code> for all production rows (no offers sent yet) causes the model to predict "no churn" for everybody. It catches <b>zero churners</b>. The lab score was 100% fraudulent.</p>
+  </div>
+  <div class="quiz" data-answer="b">
+    <p><b>Check:</b> why is the production recall exactly 0.00 and not just "low"?</p>
+    <div class="opts"><button data-v="a">Because the model has never seen this data before</button><button data-v="b">Because the model learned: "if offer = 0, predict stays" — and in production every row has offer = 0</button><button data-v="c">Because 0.618 accuracy means random guessing</button></div>
+    <p class="fb" data-ok="Yes. LogisticRegression found that retention_offer_sent was almost perfectly predictive. Its coefficient is enormous. When every value is 0, the model outputs 'stays' for all 400 test customers, missing every single churner." data-no="The issue is that the model completely relies on retention_offer_sent. In production that column is always 0, so the model's decision boundary always says 'stays'. Recall = TP / (TP + FN) = 0 / (0 + all churners) = 0.00."></p>
+  </div>
+</section>
+
+<section id="s3">
+  <span class="stepno">SECTIONS 3–4 · SPLIT THEN PREPROCESS (cells 33–57)</span>
+  <h2>The honest feature set &amp; where preprocessing leaks</h2>
+  <p>After dropping <code>customer_id</code>, <code>retention_offer_sent</code>, and <code>churn</code>, you are left with 8 features and 2,000 rows. The stratified 80/20 split gives:</p>
+  <div class="grid2">
+    <div class="box">
+      <h3>X_train (1,600 rows)</h3>
+      <p class="small">Churn rate ≈ 38.15%. Used for all preprocessing and CV.</p>
+    </div>
+    <div class="box">
+      <h3>X_test (400 rows)</h3>
+      <p class="small">Churn rate ≈ 38.15% (stratified). Untouched until the final evaluation.</p>
+    </div>
+  </div>
+  <div class="box">
+    <h3>4.1 Imputation + scaling leakage: negligible but real</h3>
+    <div class="hbars">
+      <div class="hbar"><span>Wrong way (fit on all X_train)</span><div class="t"><div class="f" style="width:75%"></div></div><span>0.7348</span></div>
+      <div class="hbar"><span>Right way (Pipeline in CV)</span><div class="t"><div class="f" style="width:75%"></div></div><span>0.7348</span></div>
+    </div>
+    <p class="small muted">For unsupervised steps on 1,600 rows the difference is ≈0.0001. It doesn't mean it's safe to skip — with a small dataset or outliers, the shift can be larger, and the <i>principle</i> of putting preprocessing inside a Pipeline is non-negotiable.</p>
+  </div>
+  <details><summary>Why is 4.1 so close?</summary><div>
+    <p class="small">The imputer fits medians; with 1,600 rows the median barely changes if you hide 320. Same for StandardScaler: the mean and std of 1,600 vs 1,280 rows differ by &lt;1%. Contrast with 4.2: SelectKBest searches 2,000 features for the 20 best — random chance guarantees it finds noise that correlates, and those "best features" are chosen specifically because they happened to fit the validation labels too.</p>
+  </div></details>
+</section>
+
+<section id="s5">
+  <span class="stepno">SECTION 5 · PROPER PIPELINE (cells 58–72)</span>
+  <h2>The full model — honest numbers</h2>
+  <div class="box">
+    <h3>Your scores</h3>
+    <div class="hbars">
+      <div class="hbar"><span>Leaky feature (sec 2)</span><div class="t"><div class="f bad" style="width:98%"></div></div><span>0.956 AUC</span></div>
+      <div class="hbar"><span>Pipeline CV AUC</span><div class="t"><div class="f" style="width:83%"></div></div><span>0.809 ± 0.036</span></div>
+      <div class="hbar"><span>Pipeline Test AUC</span><div class="t"><div class="f" style="width:78%"></div></div><span>0.761</span></div>
+      <div class="hbar"><span>Pipeline Test Accuracy</span><div class="t"><div class="f" style="width:72%"></div></div><span>0.71</span></div>
+    </div>
+    <p class="small muted">CV AUC (0.809) vs test AUC (0.761): a gap of 0.048 ≈ 1.3 standard deviations (CV std = 0.036). This is normal random variation, not a sign of leakage or overfitting.</p>
+  </div>
+  <div class="box">
+    <h3>16 output features</h3>
+    <p class="small">5 numeric (<code>num__age</code>, <code>num__tenure_months</code>, <code>num__monthly_fee</code>, <code>num__support_calls</code>, <code>num__weekly_usage_hours</code>) + 11 one-hot dummies (<code>cat__contract_type_Monthly/Two-year/Yearly</code>, <code>cat__payment_method_Bank transfer/Credit card/PayPal/Voucher</code>, <code>cat__region_East/North/South/West</code>).</p>
+    <p class="small muted"><code>get_feature_names_out()</code> on the fitted preprocessor returns all 16 names in order.</p>
+  </div>
+  <div class="quiz" data-answer="c">
+    <p><b>Check:</b> a new customer has <code>payment_method = NaN</code>. What does the fitted Pipeline do?</p>
+    <div class="opts"><button data-v="a">Raises a ValueError and refuses to predict</button><button data-v="b">Drops that customer from the prediction</button><button data-v="c">Fills the NaN with the most_frequent payment method (learned from X_train), then one-hot encodes</button></div>
+    <p class="fb" data-ok="Exactly. The SimpleImputer(strategy='most_frequent') inside the categorical_transformer was fitted on X_train, so it knows the most common payment method. It fills the gap, then OneHotEncoder encodes it. The model never even knows a value was missing." data-no="The categorical Pipeline has SimpleImputer(strategy='most_frequent') as its first step. During predict(), it applies that imputer first, replacing NaN with the mode it learned during fit(). Then encoding happens normally."></p>
+  </div>
+</section>
+
+<section id="s6">
+  <span class="stepno">SECTION 6 · GRIDSEARCHCV (cells 73–78)</span>
+  <h2>Tuning the whole pipeline at once</h2>
+  <p>Because <code>model</code> is a Pipeline, the grid search can tune both the model hyperparameter (<code>classifier__C</code>) and the preprocessing choice (<code>preprocessor__num__imputer__strategy</code>) in one sweep. All 10 combinations × 5 folds = 50 fits.</p>
+  <div class="scroll"><table>
+    <tr><th>Parameter</th><th>Values tried</th><th>Best</th></tr>
+    <tr><td><code>classifier__C</code></td><td>0.01, 0.1, 1, 10, 100</td><td>100</td></tr>
+    <tr><td><code>preprocessor__num__imputer__strategy</code></td><td>mean, median</td><td>median</td></tr>
+  </table></div>
+  <div class="box">
+    <h3>Tuning barely helps — and that's informative</h3>
+    <div class="hbars">
+      <div class="hbar"><span>Default model CV AUC</span><div class="t"><div class="f" style="width:83%"></div></div><span>0.809</span></div>
+      <div class="hbar"><span>Best grid CV AUC</span><div class="t"><div class="f" style="width:83%"></div></div><span>0.809</span></div>
+      <div class="hbar"><span>Best grid test AUC</span><div class="t"><div class="f" style="width:78%"></div></div><span>0.761</span></div>
+    </div>
+    <p class="small muted">All C ≥ 0.1 are within 0.001 of each other. Logistic Regression is stable and well-regularised on this problem — the data, not the C value, limits performance.</p>
+  </div>
+  <details><summary>Why is grid.best_score_ still slightly optimistic?</summary><div>
+    <p class="small">We chose the configuration with the highest CV score across 10 configurations. That choice introduces a tiny <b>selection bias</b> (multiple comparisons). The best_score_ is optimistic by ≈ the noise level of one comparison. The untouched test set, evaluated only once, is the only truly unbiased number.</p>
+  </div></details>
+</section>
+
+<section id="s7">
+  <span class="stepno">SECTION 7 · SPOT THE LEAKAGE SCENARIOS</span>
+  <h2>Three real-world patterns to recognise at the oral exam</h2>
+  <div class="grid2">
+    <div class="box">
+      <h3>🏥 Scenario 1: Chest X-rays</h3>
+      <p class="small"><b>Problem:</b> 3,000 patients, 10,000 images, split by image (not by patient). Some images of the same patient appear in both train and test.</p>
+      <p class="small"><b>Type:</b> Group / patient-level leakage.</p>
+      <p class="small"><b>Fix:</b> Split by patient ID using <code>GroupShuffleSplit</code> or <code>GroupKFold</code>. All images of one patient must go entirely to train or entirely to test.</p>
+    </div>
+    <div class="box">
+      <h3>💳 Scenario 2: Fraud + oversampling</h3>
+      <p class="small"><b>Problem:</b> Fraud rows copied 50× on the full dataset, then 5-fold CV. Identical rows appear in both train and validation folds.</p>
+      <p class="small"><b>Type:</b> Train-test contamination via supervised preprocessing.</p>
+      <p class="small"><b>Fix:</b> Oversample inside the CV loop (e.g. <code>imblearn.pipeline</code> with SMOTE), or use <code>class_weight="balanced"</code> in the estimator.</p>
+    </div>
+    <div class="box">
+      <h3>🍦 Scenario 3: Ice-cream sales</h3>
+      <p class="small"><b>Problem:</b> Centred 7-day average uses 3 days <i>after</i> the prediction date. Shuffled CV mixes past and future.</p>
+      <p class="small"><b>Type:</b> Temporal / lookahead bias (target leakage).</p>
+      <p class="small"><b>Fix:</b> Use a <i>lagged</i> 7-day window (days t-7 to t-1). Evaluate with <code>TimeSeriesSplit</code> (no shuffling).</p>
+    </div>
+  </div>
+</section>
+
+<section id="oral">
+  <span class="stepno">ORAL EXAM PREP · 70% OF YOUR GRADE</span>
+  <h2>Can you say these out loud?</h2>
+  <ol class="trail">
+    <li>What is target leakage? Give an example from the StreamBox dataset and explain why it's dangerous in production.</li>
+    <li>AUC of 0.956 vs 0.761 — which is honest? Why does 0.956 collapse to recall 0.00 in production?</li>
+    <li>What is the difference between train-test contamination from <i>scaling</i> and from <i>feature selection</i>? Why is one catastrophic and the other negligible?</li>
+    <li>What does a Pipeline do that prevents leakage in cross-validation?</li>
+    <li>What are the 5 steps of a safe ML workflow in the right order?</li>
+    <li>In a CV fold, on which rows does the imputer learn its median?</li>
+    <li>Why do you set <code>handle_unknown="ignore"</code> in OneHotEncoder?</li>
+    <li>The best GridSearchCV score is slightly optimistic. Why? And what gives the fully unbiased estimate?</li>
+    <li>How does TP, FP, FN, TN relate to the business cost of churn? Which threshold would you lower or raise?</li>
+    <li>Precision reads a column. Recall reads a row. What is F1?</li>
+  </ol>
+  <details><summary>Answer outline for question 5</summary><div>
+    <ol class="trail">
+      <li><b>Split first:</b> separate test set, lock it away.</li>
+      <li><b>EDA on training set only</b> — check for target leakage, missing values, distributions.</li>
+      <li><b>Build a Pipeline</b> with all preprocessing + model steps.</li>
+      <li><b>Cross-validate on X_train</b> to estimate performance and tune hyperparameters.</li>
+      <li><b>Evaluate once on X_test</b> — this is your final, honest number.</li>
+    </ol>
+  </div></details>
+</section>
+
+<footer>Numbers from your <span class="mono">6 - Data Leakage/6 - Data Leakage (Exc) (my notes).ipynb</span> (2,000 StreamBox customers, <code>random_state=42</code>, scikit-learn 1.9 in <code>.venv/</code>).</footer>
+</div>
+
+<script>
+// Quizzes
+document.querySelectorAll('.quiz').forEach(q=>{const fb=q.querySelector('.fb');
+  q.querySelectorAll('button[data-v]').forEach(b=>b.addEventListener('click',()=>{
+    q.querySelectorAll('button[data-v]').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');
+    const ok=b.dataset.v===q.dataset.answer;fb.textContent=ok?fb.dataset.ok:fb.dataset.no;fb.className='fb '+(ok?'ok':'no');}));});
+
+// Threshold explorer
+const thrSlider=document.getElementById('thr'),probSlider=document.getElementById('prob'),truthSlider=document.getElementById('truth');
+const thro=document.getElementById('thro'),probo=document.getElementById('probo'),trutho=document.getElementById('trutho');
+const verdictThr=document.getElementById('verdict-thr'),thrExplain=document.getElementById('thr-explain');
+
+function updateThr(){
+  const t=+thrSlider.value, p=+probSlider.value, truth=+truthSlider.value;
+  thro.textContent=t.toFixed(2);
+  probo.textContent=p.toFixed(2);
+  trutho.textContent=truth===1?'1 (churner)':'0 (stays)';
+  const predicted=p>=t?1:0;
+  let outcome,color,explain;
+  if(predicted===1&&truth===1){outcome='✅ True Positive (TP)';color='var(--positive)';explain='Model correctly predicts churn. A churner was caught → marketing can intervene.';}
+  else if(predicted===0&&truth===0){outcome='✅ True Negative (TN)';color='var(--positive)';explain='Model correctly predicts "stays". No unnecessary discount email sent.';}
+  else if(predicted===1&&truth===0){outcome='❌ False Positive (FP)';color='var(--negative)';explain='Model wrongly predicts churn. Loyal customer receives an unnecessary discount email.';}
+  else{outcome='❌ False Negative (FN)';color='var(--negative)';explain='Model misses a real churner. They leave silently — revenue lost forever.';}
+  verdictThr.innerHTML=`<span style="color:${color}">${outcome}</span>`;
+  thrExplain.textContent=`prob ${p.toFixed(2)} ${p>=t?'≥':'<'} threshold ${t.toFixed(2)} → predict ${predicted}. True label ${truth}. → ${explain}`;
+}
+function setThr(t,p,truth){thrSlider.value=t;probSlider.value=p;truthSlider.value=truth;updateThr();}
+[thrSlider,probSlider,truthSlider].forEach(e=>e.addEventListener('input',updateThr));
+updateThr();
+</script>
+
+</html>
+

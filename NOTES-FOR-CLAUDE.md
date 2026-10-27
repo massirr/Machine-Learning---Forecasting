@@ -2,7 +2,7 @@
 
 Shared status between Claude in VS Code and Claude in the Claude app. Current state only: replace lines, don't append. Finished detail goes to `docs/archive/`, how I study to `docs/learner-profile.md`.
 
-Last updated: 2026-10-21
+Last updated: 2026-10-26
 
 ## Where I am
 
@@ -12,9 +12,9 @@ Last updated: 2026-10-21
   - Assignment (Ames housing, ElasticNet + GridSearchCV, due around 2026-10-17) in `3 - Reg & CV & GS (Exc) (my notes).ipynb`. Full grid done: alpha=100, l1_ratio=1, MAE $14,195, RMSE $20,559, 66 of 273 features dropped.
   - Left as of 2026-10-13: answer the study-guide questions (best value at the edge of the grid, which penalty zeroed the 66 features), read the scatter plot, clean up the comments, then Restart & Run All and commit.
   - The last 2 cells (coefficient bar chart, predicted-vs-real scatter) were added by Claude, not part of the task.
-- Lesson 6 (Data Leakage & Pipelines): class notebooks `6 - Data Leakage (my notes)` and `6 - Pipelines (my notes)` reviewed, Step 4 included (2026-10-21). Claude added cells: 3 Mermaid diagrams in the Data Leakage copy; in the Pipelines copy "My notes: one house through Step 2" (before Step 3) and "My notes: reading the three scores" (after Key Takeaways).
-  - Next: exercise `6 - Data Leakage (Exc) (my notes).ipynb`, all cells empty, start at cell 11.
-  - Open question I didn't answer yet: row with true 1, probability 0.37, at threshold 0.3 → TP or FN?
+- Lesson 6 (Data Leakage & Pipelines): class notebooks `6 - Data Leakage (my notes)` and `6 - Pipelines (my notes)` reviewed (2026-10-21).
+  - Exercise `6 - Data Leakage (Exc) (my notes).ipynb` completed: all tasks and questions filled (Sections 1–8).
+  - Next: "Restart & Run All" in VS Code notebook editor for submission, then review/study each section for oral exam prep (TP/FN at thresholds, why target leakage is not overfitting, supervised vs. unsupervised preprocessing leakage, and pipeline construction).
 
 ## Plans
 

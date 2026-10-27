@@ -44,3 +44,5 @@ Still to work on:
 - fit learns the numbers (train only), transform uses them on anything. A 4-bath test house gets (4 − 1.56) / 0.55 ≈ +4.4: fine, just information (the model extrapolates).
 - `handle_unknown="ignore"`: an unseen category (e.g. HouseStyle "3Story") becomes all-zero columns instead of a ValueError.
 - Check again: in a CV round, the imputer/scaler are fit on that round's 4 training folds (~934 houses), not on the held-out fold and never on X_test. My answer ("the splits out of the test split") was vague.
+- Target leakage vs. model fitting (2026-10-25): confused the `groupby('churn').mean()` table with overfitting/underfitting. Clarified: that table is raw EDA on raw data, not model training. It reveals target leakage (features created *after* the customer decided to churn, like `retention_offer_sent`), which breaks causality in production.
+- FP vs FN business cost: initially thought FNs are "never a big deal"; reinforced that in churn (and medical/fraud), FNs (missed churners) are often far more costly than FPs (unnecessary discount email).
