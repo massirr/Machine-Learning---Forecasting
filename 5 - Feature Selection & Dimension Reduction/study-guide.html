@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature Selection &amp; Dimension Reduction Study Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ink:#16191e; --ink-soft:#3d444d;
+  --paper:#f4f4f2; --surface:#f7f8f5; --accent:#b0c9e2; --paper-strong:#649fd3;
+  --accent-coral:#e28568; --accent-apricot:#ecaa4f; --accent-rose:#d983ae;
+  --positive:#2e7d4f; --negative:#c0392b; --white:#ffffff;
+  --border-hard:2px solid var(--ink);
+  --shadow:7px 7px 0 var(--ink); --shadow-sm:5px 5px 0 var(--ink);
+  --font:Manrope,"Avenir Next","Segoe UI Variable","Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+html{overflow-x:hidden}
+*{border-radius:0!important;box-sizing:border-box}
+body{color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(22,25,30,0.14) 1.5px,transparent 1.5px);background-size:22px 22px;
+  padding-inline:24px;padding-block:32px 64px}
+.wrap{max-width:880px;margin:0 auto;display:grid;gap:28px}
+.wrap>*{min-width:0}
+h1,h2,h3{font-weight:800;line-height:1.1;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.85rem,3.5vw,2.8rem);line-height:1.05;letter-spacing:-.03em}
+h2{display:inline-block;justify-self:start;font-size:1.2rem;padding:.45rem .8rem;background:var(--paper-strong);color:var(--ink)}
+section:nth-of-type(4n+2) h2{background:var(--accent-coral)}
+section:nth-of-type(4n+3) h2{background:var(--accent-apricot)}
+section:nth-of-type(4n) h2{background:var(--accent-rose)}
+h3{font-size:1rem}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.84em;overflow-wrap:anywhere}
+code{background:var(--white);border:1px solid var(--ink);padding:0 4px}
+.eyebrow,.stepno,.part{font-size:.8rem;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+header,section{background:var(--surface);border:var(--border-hard);box-shadow:var(--shadow);padding:24px;display:grid;gap:16px}
+.lede{color:var(--ink-soft);max-width:66ch}
+.coords{font-family:var(--mono);font-size:.76rem;color:var(--ink-soft)}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:.85rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--white);border:var(--border-hard);padding:4px 10px;transition:transform .18s ease,background-color .18s ease}
+nav.toc a:hover{background:var(--accent);transform:translateY(-1px)}
+.part{padding-block:8px 0;font-size:.9rem;color:var(--ink)}
+.task{background:var(--accent);border:var(--border-hard);padding:12px 16px}
+.task b{font-weight:800}
+details{border:var(--border-hard);background:var(--white)}
+details summary{cursor:pointer;padding:10px 14px;font-weight:700;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+ ";font-weight:800}
+details[open] summary::before{content:"– "}
+details[open] summary{border-bottom:var(--border-hard)}
+details>div{padding:12px 14px 14px;display:grid;gap:10px}
+summary:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible,td:focus-visible{outline:3px solid var(--paper-strong);outline-offset:2px}
+pre{background:var(--white);border:var(--border-hard);padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.5;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.grid2>*{min-width:0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.box{background:var(--white);border:var(--border-hard);padding:14px;display:grid;gap:10px;min-width:0}
+.box>*{min-width:0}
+.muted{color:var(--ink-soft)} .small{font-size:.88rem}
+button{font-family:var(--font);font-size:.88rem;font-weight:700;border:var(--border-hard);background:var(--accent);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .18s ease,background-color .18s ease}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--paper-strong)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;padding-bottom:4px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.8rem;font-variant-numeric:tabular-nums;background:var(--white)}
+th,td{border:1px solid var(--ink);padding:6px 10px;text-align:left}
+th{color:var(--ink);font-weight:700;background:var(--surface)}
+.gotcha{border:var(--border-hard);border-left:8px solid var(--negative);padding:12px 14px;background:var(--white);display:grid;gap:6px}
+.gotcha .eyebrow{color:var(--negative)}
+.quiz{display:grid;gap:10px;background:var(--white);border:var(--border-hard);padding:14px}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:10px;padding-bottom:4px}
+.fb{font-size:.9rem;min-height:1.4em;font-weight:600}
+.fb.ok{color:var(--positive)} .fb.no{color:var(--negative)}
+.slider{display:grid;grid-template-columns:180px 1fr 90px;gap:10px;align-items:center;font-family:var(--mono);font-size:.8rem}
+.slider>*{min-width:0}
+.slider output{text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ink)}
+.verdict{font-size:1.1rem;font-weight:800}
+ol.trail{margin:0;padding-left:1.2em;display:grid;gap:6px}
+footer{padding-block:8px;color:var(--ink-soft);font-size:.9rem}
+@media (max-width:720px){header,section{box-shadow:var(--shadow-sm);padding:16px}body{padding-inline:12px}}
+@media (max-width:560px){.slider{grid-template-columns:1fr 70px}.slider label{grid-column:1/-1}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Machine Learning &amp; Forecasting · Lecture 5</span>
+  <h1>Feature Selection (Boruta) &amp; Dimension Reduction (PCA)</h1>
+  <p class="lede">Comprehensive revision guide and oral-exam prep for Lesson 5. We solve one fundamental problem: <b>too many features</b>. You can either select the original features that matter (Boruta) or synthesize fewer, denser new features (PCA).</p>
+  <span class="coords">Digits Dataset · 1,797 samples · 64 pixel features (0–16 scale) · 10 balanced digit classes · Boruta confirmed 50 / rejected 14 · PCA 95% threshold = 40 PCs</span>
+  <nav class="toc" aria-label="Contents">
+    <a href="#why">Why reduce?</a>
+    <a href="#families">4 Feature Families</a>
+    <a href="#boruta">How Boruta Works</a>
+    <a href="#borutashap">BorutaShap &amp; SHAP</a>
+    <a href="#pca">How PCA Works</a>
+    <a href="#scaling">Role of Scaling</a>
+    <a href="#exercise">Exercise Results</a>
+    <a href="#comparison">Boruta vs PCA</a>
+    <a href="#oral">Oral Exam Drill</a>
+  </nav>
+</header>
+
+<div class="part">Part A · The Core Theory</div>
+
+<section id="why">
+  <span class="stepno">CONCEPT 1 · THE CURSE OF HIGH DIMENSIONALITY</span>
+  <h2>Too many features: what goes wrong?</h2>
+  <p>Imagine genetic data: <b>20,000 genes (features)</b> measured across only <b>200 patients (rows)</b>. When features far outnumber rows, three critical problems emerge:</p>
+  <div class="grid3">
+    <div class="box">
+      <h3>1. Computational Cost</h3>
+      <p class="small">Massive memory footprint, slower matrix inversions, and lengthy grid search tuning cycles.</p>
+    </div>
+    <div class="box">
+      <h3>2. High Variance (Overfitting)</h3>
+      <p class="small">The model memorizes random noise rather than real signal. Training accuracy hits 100%, but test accuracy collapses.</p>
+    </div>
+    <div class="box">
+      <h3>3. Visualization Barrier</h3>
+      <p class="small">With 30 features, inspecting all pairwise relationships requires <b>435 separate scatter plots</b> ($30 \times 29 / 2$).</p>
+    </div>
+  </div>
+  <div class="gotcha">
+    <span class="eyebrow">The Packing Analogy</span>
+    <p class="small">Packing for a weekend trip: you pack only the clothes you will actually wear, not your entire wardrobe.</p>
+  </div>
+</section>
+
+<section id="families">
+  <span class="stepno">CONCEPT 2 · TAXONOMY</span>
+  <h2>The Four Families of Feature Selection</h2>
+  <div class="grid2">
+    <div class="box">
+      <h3>1. Filter Methods</h3>
+      <p class="small">Score features using a statistical metric <b>before any model is trained</b>.</p>
+      <p class="small muted"><b>Metrics:</b> Pearson correlation, Mutual Information / Information Gain, $\chi^2$ test.<br><b>Analogy:</b> Screening CVs on paper before interviewing anyone.</p>
+    </div>
+    <div class="box">
+      <h3>2. Wrapper Methods</h3>
+      <p class="small">Train and evaluate the model <b>repeatedly</b> on different candidate feature subsets.</p>
+      <p class="small muted"><b>Strategies:</b> Forward Selection, Backward Elimination, RFE.<br><b>Analogy:</b> Holding sports trial days with different squad combinations.</p>
+    </div>
+    <div class="box">
+      <h3>3. Embedded Methods</h3>
+      <p class="small">Feature selection happens <b>inside model training</b> as a natural mathematical penalty.</p>
+      <p class="small muted"><b>Examples:</b> LASSO ($L_1$ penalty shrinks coefficients to exactly zero), Random Forest Gini impurity reduction.<br><b>Analogy:</b> Learning on the job; weak contributors get phased out.</p>
+    </div>
+    <div class="box">
+      <h3>4. Hybrid Methods</h3>
+      <p class="small">Combine strengths of multiple families (e.g. wrapper search + embedded tree importance).</p>
+      <p class="small muted"><b>Examples:</b> Boruta, Genetic Algorithms.<br><b>Analogy:</b> Evolutionary tournament testing candidates across generations.</p>
+    </div>
+  </div>
+
+  <div class="quiz" data-answer="b">
+    <p><b>Quick Check:</b> You train a LASSO regression model and discard all features whose learned coefficients are pushed to 0. Which family is this?</p>
+    <div class="opts">
+      <button onclick="checkQuiz(this, 'a')">A. Filter</button>
+      <button onclick="checkQuiz(this, 'b')">B. Embedded</button>
+      <button onclick="checkQuiz(this, 'c')">C. Wrapper</button>
+      <button onclick="checkQuiz(this, 'd')">D. Hybrid</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+</section>
+
+<section id="boruta">
+  <span class="stepno">CONCEPT 3 · STATISTICAL FEATURE SELECTION</span>
+  <h2>Boruta: Shuffled Noise Sets the Bar</h2>
+  <p>Named after the Slavic forest spirit who lives in a random forest. Boruta answers one crucial question: <b>"Would this feature still look useful if it were pure noise?"</b></p>
+
+  <ol class="trail">
+    <li><b>Step 1: Create Shadow Features</b><br>
+    Duplicate every column and randomly shuffle its values. Shuffling preserves the exact empirical distribution (mean, variance, min, max) while completely destroying any relationship with the target $y$.</li>
+    <li><b>Step 2: Merge Real and Shadow Features</b><br>
+    Concatenate original features $X$ and shadow features $X_{shadow}$ side-by-side (doubling the column count to $2p$).</li>
+    <li><b>Step 3: Train Random Forest &amp; Measure Z-Score</b><br>
+    Train a random forest on the combined dataset. Compute each feature's importance $Z = \text{mean}(imp) / \text{std}(imp)$ across all trees. A feature gets a <b>"hit"</b> if its $Z$-score exceeds the <b>maximum $Z$-score among all shadow features</b>.</li>
+    <li><b>Step 4: Binomial Test &amp; Iterate</b><br>
+    Repeat across multiple rounds (default 50–100 trials). Hit counts follow a binomial distribution under the null hypothesis ($p=0.5$). Features statistically above the threshold are <b>Confirmed</b>; features significantly below are <b>Rejected</b> and dropped from subsequent rounds.</li>
+  </ol>
+
+  <div class="quiz" data-answer="b">
+    <p><b>Quick Check:</b> Why does Boruta create shadow features by shuffling real values instead of generating fresh Gaussian random numbers?</p>
+    <div class="opts">
+      <button onclick="checkQuiz(this, 'a')">A. Shuffling is computationally faster than random sampling.</button>
+      <button onclick="checkQuiz(this, 'b')">B. Shuffling preserves the exact scale, outliers, and distribution of the real data so the noise benchmark is completely fair.</button>
+      <button onclick="checkQuiz(this, 'c')">C. Random numbers cannot be evaluated by decision trees.</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+</section>
+
+<section id="borutashap">
+  <span class="stepno">CONCEPT 4 · BORUTASHAP &amp; SHAPLEY VALUES</span>
+  <h2>BorutaShap: Cooperative Game Theory</h2>
+  <p>BorutaShap keeps the exact same shadow feature logic as original Boruta, but replaces permutation/impurity importance with <b>SHAP values</b>.</p>
+  <div class="grid2">
+    <div class="box">
+      <h3>Shapley Values (Game Theory)</h3>
+      <p class="small">A team wins a shared bonus. How do you divide the prize fairly? Give each player their average marginal contribution across all possible team orderings.</p>
+    </div>
+    <div class="box">
+      <h3>Applied to ML (SHAP)</h3>
+      <p class="small">Each feature is a "player", the model prediction is the "bonus". SHAP measures the fair share of prediction shift attributed to each feature ($y - \bar{y}$).</p>
+    </div>
+  </div>
+  <div class="gotcha">
+    <span class="eyebrow">Why BorutaShap?</span>
+    <p class="small">Original Boruta's Gini importance is biased towards high-cardinality features and correlated groups. SHAP values provide consistent, unbiased global feature importance with faster convergence.</p>
+  </div>
+</section>
+
+<section id="pca">
+  <span class="stepno">CONCEPT 5 · UNSUPERVISED COMPRESSION</span>
+  <h2>Principal Component Analysis (PCA)</h2>
+  <p>PCA does <b>not</b> select features. It creates <b>new</b> orthogonal features (principal components) that are linear combinations of all original features:</p>
+  <p><code>PC_k = w_{k,1} X_1 + w_{k,2} X_2 + \dots + w_{k,p} X_p</code></p>
+  <div class="grid2">
+    <div class="box">
+      <h3>The Smoothie Analogy</h3>
+      <p class="small"><b>Feature Selection:</b> Picking whole fruits to eat (e.g. keeping bananas and strawberries, throwing out the apple).<br>
+      <b>PCA:</b> Blending everything into a smoothie. Every glass has a fraction of every fruit; you cannot separate the apple back out.</p>
+    </div>
+    <div class="box">
+      <h3>Mathematical Steps</h3>
+      <p class="small">
+      1. Standardize $X$ (mean=0, std=1)<br>
+      2. Compute covariance matrix $\Sigma = \frac{1}{n} X^T X$<br>
+      3. Compute eigenvectors (directions) and eigenvalues (variance)<br>
+      4. Sort components by descending eigenvalue and project data.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="scaling">
+  <span class="stepno">CONCEPT 6 · SENSITIVITY</span>
+  <h2>Why Scaling is Essential for PCA</h2>
+  <p>PCA maximizes variance along orthogonal axes. If one variable has values in the millions (e.g. annual salary) and another has values from 0 to 1 (e.g. credit utilization ratio), the high-magnitude variable will dominate the first principal component regardless of predictive value.</p>
+  <div class="box">
+    <h3>The Digits Experiment (Scaled vs Unscaled)</h3>
+    <p class="small">Even though all 64 pixels are measured on the same 0–16 brightness scale:</p>
+    <ul class="small">
+      <li><b>Unscaled PCA:</b> Center pixels have natural variance up to ~45, while border pixels have variance near 0. Unscaled PCA prioritizes the high-variance center and reaches 95% variance with only <b>29 components</b>.</li>
+      <li><b>Scaled PCA:</b> <code>StandardScaler</code> sets every pixel variance to 1.0. This spreads variance equally across all 64 coordinates, requiring <b>40 components</b> to capture 95% variance.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="part">Part B · Exercise Walkthrough &amp; Exact Results</div>
+
+<section id="exercise">
+  <span class="stepno">DATASET &amp; EXPERIMENT</span>
+  <h2>Handwritten Digits Exercise (scikit-learn `load_digits`)</h2>
+  <p><b>Data:</b> 1,797 images of 8x8 pixels (64 total features), pixel values from 0 (white background) to 16 (black stroke). 10 balanced classes (digits 0–9, ~180 images each).</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Model Pipeline</th>
+          <th>Features</th>
+          <th>5-Fold CV Acc</th>
+          <th>Test Acc</th>
+          <th>Fit Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:#f0fff4">
+          <td><b>Logistic Regression (All 64)</b></td>
+          <td>64</td>
+          <td>96.88%</td>
+          <td><b>97.78%</b></td>
+          <td>0.048 s</td>
+        </tr>
+        <tr style="background:#f0fff4">
+          <td><b>Random Forest (Boruta Sel)</b></td>
+          <td><b>50</b></td>
+          <td>97.40%</td>
+          <td><b>97.11%</b></td>
+          <td>0.172 s</td>
+        </tr>
+        <tr>
+          <td>Random Forest (All 64)</td>
+          <td>64</td>
+          <td>97.40%</td>
+          <td>96.67%</td>
+          <td>0.178 s</td>
+        </tr>
+        <tr>
+          <td>Logistic Regression (PCA 40)</td>
+          <td>40</td>
+          <td>95.47%</td>
+          <td>96.00%</td>
+          <td>0.011 s</td>
+        </tr>
+        <tr style="background:#fff5f5">
+          <td>Random Forest (PCA 40)</td>
+          <td>40</td>
+          <td>93.02%</td>
+          <td>95.11%</td>
+          <td>0.228 s</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="box">
+      <h3>Boruta Outcome</h3>
+      <p class="small"><b>Kept 50, Rejected 14.</b> The 14 rejected pixels were all located along the outer vertical edges (`pixel_x_0` and `pixel_x_7`), including the 3 constant zero-variance pixels (`pixel_0_0`, `pixel_4_0`, `pixel_4_7`).</p>
+    </div>
+    <div class="box">
+      <h3>Why Random Forest Drops on PCA</h3>
+      <p class="small">Decision trees split on single, orthogonal coordinates ($x_j \le c$). Original pixels are sparse and localized. PCA mixes all pixels into dense linear combinations, which forces trees to build awkward staircase approximations.</p>
+    </div>
+  </div>
+</section>
+
+<section id="comparison">
+  <span class="stepno">SUMMARY TABLE</span>
+  <h2>Feature Selection vs Dimension Reduction</h2>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Criterion</th>
+          <th>Feature Selection (Boruta)</th>
+          <th>Dimension Reduction (PCA)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Keeps original features?</b></td>
+          <td>Yes (drops unneeded columns)</td>
+          <td>No (creates new synthetic components)</td>
+        </tr>
+        <tr>
+          <td><b>Interpretability</b></td>
+          <td>High (original units &amp; variables preserved)</td>
+          <td>Low (each component is a blend of all inputs)</td>
+        </tr>
+        <tr>
+          <td><b>Supervision</b></td>
+          <td>Supervised (uses labels $y$ to judge importance)</td>
+          <td>Unsupervised (looks only at variance in $X$)</td>
+        </tr>
+        <tr>
+          <td><b>Tree model compatibility</b></td>
+          <td>Excellent (axis-aligned splits)</td>
+          <td>Poor to moderate (dense continuous rotations)</td>
+        </tr>
+        <tr>
+          <td><b>Linear model compatibility</b></td>
+          <td>Good</td>
+          <td>Excellent (eliminates multicollinearity)</td>
+        </tr>
+        <tr>
+          <td><b>Primary use case</b></td>
+          <td>Biomedical, finance, legal transparency</td>
+          <td>High-dimensional compression, 2D/3D visualization</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="oral">
+  <span class="stepno">EXAM SIMULATION</span>
+  <h2>Oral Exam Drill: Professor's "Why" Questions</h2>
+
+  <details>
+    <summary>1. "Why can't we just pick the top 10 features by Pearson correlation with the target?"</summary>
+    <div>
+      <p class="small"><b>Answer:</b> Pearson correlation only captures <i>linear</i> relationships and evaluates each feature in isolation (univariate). It misses non-linear interactions and keeps redundant, multicollinear copies of the same information. Boruta evaluates features in non-linear tree ensembles taking multivariate interactions into account.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>2. "Why does a Random Forest perform worse on PCA components than on the raw Boruta pixels?"</summary>
+    <div>
+      <p class="small"><b>Answer:</b> Decision trees make axis-aligned cuts ($x_j \le c$). When PCA rotates the feature space into linear combinations of 64 pixels, the clean, localized spatial structure is lost. To partition a diagonal rotated boundary, trees must build complex multi-step staircase splits, increasing variance and error.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>3. "In PCA, why does PC1 + PC2 explaining 22% of variance result in poor classification (~51%)?"</summary>
+    <div>
+      <p class="small"><b>Answer:</b> Discarding 78% of the dataset's variance removes the subtle variations needed to distinguish between complex digits like 1, 2, 8, and 9. While PC1 and PC2 separate 0 and 4, 2 dimensions do not provide enough degrees of freedom to linearly separate 10 overlapping handwriting patterns.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>4. "Why must PCA and Scaler be fitted only on training folds inside a Pipeline?"</summary>
+    <div>
+      <p class="small"><b>Answer:</b> If you fit `StandardScaler` or `PCA` on the whole dataset before splitting, the learned means, standard deviations, and eigenvector loading vectors leak information from the test/validation sets into training (data leakage). This produces over-optimistic evaluation scores that collapse in production.</p>
+    </div>
+  </details>
+</section>
+
+<footer>
+  <p class="small muted">Study guide prepared for Koze · Machine Learning &amp; Forecasting · Oral Exam Preparation</p>
+</footer>
+
+</div>
+
+<script>
+function checkQuiz(btn, ans){
+  const quiz = btn.closest('.quiz');
+  const correct = quiz.dataset.answer;
+  const fb = quiz.querySelector('.fb');
+  quiz.querySelectorAll('button').forEach(b => b.removeAttribute('aria-pressed'));
+  btn.setAttribute('aria-pressed', 'true');
+  if(ans === correct){
+    fb.textContent = '✓ Correct! Exactly right.';
+    fb.className = 'fb ok';
+  } else {
+    fb.textContent = '✗ Not quite. Re-read the section above and try again.';
+    fb.className = 'fb no';
+  }
+}
+</script>
+</body>
+</html>
